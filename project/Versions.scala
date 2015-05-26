@@ -7,7 +7,7 @@ object Versions {
   val version_prefix = "0.14.0"
   val version_suffix = {
     val svnProc = Process(command = "svn", arguments = Seq("info"))
-    val sedCommand = "s/^.*Revision:[[:space:]]\\{1,\\}\\([[:digit:]]\\{1,\\}\\).*$/\\1/p"
+    val sedCommand = "s/^.*Last Changed Rev: \\([[:digit:]]\\{1,\\}\\).*$/\\1/p"
     val sedProc = Process(command = "sed", arguments = Seq("-n", sedCommand))
     val svnRevision = svnProc.#|(sedProc).!!.trim
     svnRevision
@@ -20,7 +20,7 @@ object Versions {
   // OTI Core version
     
   val oti_core_prefix = "0.14.0"
-  val oti_core_suffix = "761"
+  val oti_core_suffix = "769"
   val oti_core_version = oti_core_prefix+"-"+oti_core_suffix
 
 }
