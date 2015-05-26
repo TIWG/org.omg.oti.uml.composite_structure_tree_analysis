@@ -13,3 +13,6 @@ addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.6.12")
 resolvers += Classpaths.sbtPluginReleases
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.0.1")
+
+// https://github.com/jrudolph/sbt-dependency-graph
+addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.5")
