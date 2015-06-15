@@ -76,7 +76,7 @@ object OTITrees extends Build {
         "org.scala-lang" % "scala-reflect" % Versions.scala % "provided" withSources() withJavadoc(),
         "org.scala-lang" % "scala-library" % Versions.scala % "provided" withSources() withJavadoc(),
         "org.scala-lang" % "scala-compiler" % Versions.scala % "provided" withSources() withJavadoc(),
-        "gov.nasa.jpl.mbee.omg.oti" %% "oti-core" % Versions.oti_core_version withSources() withJavadoc() artifacts Artifact("oti-core", "resources")
+        "gov.nasa.jpl.mbee.omg.oti" %% "oti-core" % Versions.oti_core_version withSources() withJavadoc() artifacts Artifact("oti-core", "resource")
       ),
       scalaSource in Compile := baseDirectory.value / "src",
       classDirectory in Compile := baseDirectory.value / "bin",
@@ -85,6 +85,7 @@ object OTITrees extends Build {
       mappings in Universal <++= (baseDirectory, packageBin in Compile, packageSrc in Compile, packageDoc in Compile) map {
         (dir, bin, src, doc) =>
           (dir ** "*.dynamicScripts").pair(relativeTo(dir)) ++
+            (dir ** "*.md").pair(relativeTo(dir)) ++
             com.typesafe.sbt.packager.MappingsHelper.directory(dir / "resources") ++
             Seq(
               (bin, "lib/" + bin.name),
@@ -92,9 +93,9 @@ object OTITrees extends Build {
               (doc, "lib.javadoc/" + doc.name)
             )
       },
-      artifacts <+= (name in Universal) { n => Artifact(n, "jar", "jar", Some("resources"), Seq(), None, Map()) },
+      artifacts <+= (name in Universal) { n => Artifact(n, "jar", "jar", Some("resource"), Seq(), None, Map()) },
       packagedArtifacts <+= (packageBin in Universal, name in Universal) map { (p,n) =>
-        Artifact(n, "jar", "jar", Some("resources"), Seq(), None, Map()) -> p
+        Artifact(n, "jar", "jar", Some("resource"), Seq(), None, Map()) -> p
       },
 
       aether.AetherKeys.aetherArtifact <<=
