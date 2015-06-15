@@ -4,6 +4,7 @@ import com.banno.license.Plugin.LicenseKeys._
 import net.virtualvoid.sbt.graph.Plugin.graphSettings
 import sbt.Keys._
 import sbt._
+import com.typesafe.sbt.packager.universal.UniversalPlugin.autoImport._
 
 /**
  * sbt \
@@ -64,6 +65,7 @@ object OTITrees extends Build {
     "oti-trees",
     file(".")).
     enablePlugins(aether.AetherPlugin).
+    enablePlugins(com.typesafe.sbt.packager.universal.UniversalPlugin).
     enablePlugins(com.timushev.sbt.updates.UpdatesPlugin).
     settings(otiSettings: _*).
     settings(commonSettings: _*).
@@ -74,10 +76,33 @@ object OTITrees extends Build {
         "org.scala-lang" % "scala-reflect" % Versions.scala % "provided" withSources() withJavadoc(),
         "org.scala-lang" % "scala-library" % Versions.scala % "provided" withSources() withJavadoc(),
         "org.scala-lang" % "scala-compiler" % Versions.scala % "provided" withSources() withJavadoc(),
-        "gov.nasa.jpl.mbee.omg.oti" %% "oti-core" % Versions.oti_core_version withSources() withJavadoc()
+        "gov.nasa.jpl.mbee.omg.oti" %% "oti-core" % Versions.oti_core_version withSources() withJavadoc() artifacts Artifact("oti-core", "resources")
       ),
       scalaSource in Compile := baseDirectory.value / "src",
       classDirectory in Compile := baseDirectory.value / "bin",
+
+      com.typesafe.sbt.packager.Keys.topLevelDirectory in Universal := Some("dynamicScripts/org.omg.oti.trees"),
+      mappings in Universal <++= (baseDirectory, packageBin in Compile, packageSrc in Compile, packageDoc in Compile) map {
+        (dir, bin, src, doc) =>
+          (dir ** "*.dynamicScripts").pair(relativeTo(dir)) ++
+            com.typesafe.sbt.packager.MappingsHelper.directory(dir / "resources") ++
+            Seq(bin, src, doc).map( jar => (jar, "lib/" + jar.name) )
+      },
+      artifacts <+= (name in Universal) { n => Artifact(n, "jar", "jar", Some("resources"), Seq(), None, Map()) },
+      packagedArtifacts <+= (packageBin in Universal, name in Universal) map { (p,n) =>
+        Artifact(n, "jar", "jar", Some("resources"), Seq(), None, Map()) -> p
+      },
+
+      aether.AetherKeys.aetherArtifact <<=
+        (aether.AetherKeys.aetherCoordinates,
+          aether.AetherKeys.aetherPackageMain,
+          makePom in Compile,
+          packagedArtifacts in Compile) map {
+          (coords: aether.MavenCoordinates, mainArtifact: File, pom: File, artifacts: Map[Artifact, File]) =>
+            aether.AetherPlugin.createArtifact(artifacts, pom, coords, mainArtifact)
+        },
+
+
       shellPrompt := { state => Project.extract(state).currentRef.project + " @ " + Versions.version_suffix + "> " }
     )
     

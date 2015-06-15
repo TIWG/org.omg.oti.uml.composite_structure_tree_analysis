@@ -27,3 +27,6 @@ addSbtPlugin("no.arktekk.sbt" % "aether-deploy" % "0.14")
 
 // https://github.com/rtimush/sbt-updates
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.1.8")
+
+// https://github.com/sbt/sbt-native-packager
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.0.2")
