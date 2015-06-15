@@ -117,6 +117,12 @@ object OTITrees extends Build {
             addIfExists(docT, "lib.javadoc/" + docT.name)
       },
 
+      // add the '*-resource.zip' to the list of artifacts to publish; note that '.zip' will change to '.jar'
+      artifacts <+= (name in Universal) { n => Artifact(n, "jar", "jar", Some("resource"), Seq(), None, Map()) },
+      packagedArtifacts <+= (packageBin in Universal, name in Universal) map { (p, n) =>
+        Artifact(n, "jar", "jar", Some("resource"), Seq(), None, Map()) -> p
+      },
+
       aether.AetherKeys.aetherArtifact <<=
         (aether.AetherKeys.aetherCoordinates,
           aether.AetherKeys.aetherPackageMain,
