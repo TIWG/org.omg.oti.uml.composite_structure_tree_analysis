@@ -20,7 +20,7 @@ object Versions {
   // OTI Core version
     
   val oti_core_prefix = "0.15.0"
-  val oti_core_suffix = "1009"
+  val oti_core_suffix = "1013"
   val oti_core_version = oti_core_prefix+"-"+oti_core_suffix
 
 }
