@@ -72,40 +72,54 @@ sealed trait TreeTypedFeatureBranch[Uml <: UML]
 
 }
 
-case class TreePropertyBranch[Uml <: UML](override val branch: Some[UMLProperty[Uml]],
-                                          override val child: TreeType[Uml])
+case class TreePropertyBranch[Uml <: UML]
+( override val branch: Some[UMLProperty[Uml]],
+  override val child: TreeType[Uml])
   extends TreeTypedFeatureBranch[Uml] {
-  override def toString: String = "TreeAssociationPortBranch{branch=" + branch.get.qualifiedName.get +
-    ",\nchild=" + child +
-    "\n}"
+
+  import sext._
+
+  override def toString: String = this.valueTreeString
+
 }
 
-case class TreeAssociationPropertyBranch[Uml <: UML](override val branch: Some[UMLProperty[Uml]],
-                                                     override val association: Some[UMLAssociation[Uml]],
-                                                     override val child: TreeType[Uml])
+case class TreeAssociationPropertyBranch[Uml <: UML]
+( override val branch: Some[UMLProperty[Uml]],
+  override val association: Some[UMLAssociation[Uml]],
+  override val child: TreeType[Uml] )
   extends TreeTypedFeatureBranch[Uml] {
-  override def toString: String = "TreeAssociationPropertyBranch{branch="+ branch.get.qualifiedName.get +
-    ",\nassociation=" + association.get.qualifiedName.get +
-    ",\nchild=" + child +
-    "\n}"
+  import sext._
+
+  override lazy val name: String = branch.get.owningAssociation match {
+    case Some(a) =>
+      require(a == association.get)
+      a.name.get+"."+branch.get.name.get
+    case None =>
+      branch.get.name.get
+  }
+
+  override def toString: String = this.treeString
 }
 
-case class TreePortBranch[Uml <: UML](override val branch: Some[UMLPort[Uml]],
-                                      override val child: TreeType[Uml])
+case class TreePortBranch[Uml <: UML]
+( override val branch: Some[UMLPort[Uml]],
+  override val child: TreeType[Uml])
   extends TreeTypedFeatureBranch[Uml] {
-  override def toString: String = "TreeAssociationPortBranch{branch=" + branch.get.qualifiedName.get +
-    ",\nchild=" + child +
-    "\n}"
+
+  import sext._
+
+  override def toString: String = this.treeString
 }
 
-case class TreeAssociationPortBranch[Uml <: UML](override val branch: Some[UMLPort[Uml]],
-                                                 override val association: Some[UMLAssociation[Uml]],
-                                                 override val child: TreeType[Uml])
+case class TreeAssociationPortBranch[Uml <: UML]
+( override val branch: Some[UMLPort[Uml]],
+  override val association: Some[UMLAssociation[Uml]],
+  override val child: TreeType[Uml])
   extends TreeTypedFeatureBranch[Uml] {
-  override def toString: String = "TreeAssociationPortBranch{branch=" + branch.get.qualifiedName.get +
-    ",\nassociation=" + association.get.qualifiedName.get +
-    ",\nchild=" + child +
-    "\n}"
+
+  import sext._
+
+  override def toString: String = this.treeString
 }
 
 /**
@@ -201,39 +215,52 @@ object IllFormedTreeFeatureExplanation extends Enumeration {
 
 import IllFormedTreeFeatureExplanation._
 
-case class IllFormedTreeFeatureBranch[Uml <: UML](override val branch: Option[UMLStructuralFeature[Uml]],
-                                                  override val association: Option[UMLAssociation[Uml]],
-                                                  explanation: Seq[IllFormedTreeFeatureExplanation])
+case class IllFormedTreeFeatureBranch[Uml <: UML]
+( override val branch: Option[UMLStructuralFeature[Uml]],
+  override val association: Option[UMLAssociation[Uml]],
+  explanation: Seq[IllFormedTreeFeatureExplanation])
   extends TreeFeatureBranch[Uml] {
-  override def toString: String = "IllFormedTreeFeatureBranch{" +
-    ((branch, association) match {
-      case ( Some(b), Some(a) ) => "branch="+b.qualifiedName.get+", association="+a.qualifiedName.get
-      case ( Some(b), None ) => "branch="+b.qualifiedName.get+", association=None"
-      case ( None, Some(a) ) => "branch=None, association="+a.qualifiedName.get
-      case ( None, None ) => "branch=None, association=None"
-    }) + ",\nexplanation="+ explanation.mkString(", ")+
-    "\n}"
+
+  import sext._
+
+  override def toString: String = this.treeString
 }
 
 object TreeFeatureBranch {
 
-  def isWellFormed[Uml <: UML](treeBranch: TreeFeatureBranch[Uml]): Boolean =
+  /**
+   * Collect pairs of either ill-formed tree types or of a tree type and and ill-formed tree type branch.
+   *
+   * @param treeType The parent TreeType for a TreeFeatureBranch to analyze
+   * @param treeBranch A TreeFeatureBranch for which to collect pairs
+   * @tparam Uml
+   * @return A sequence of pairs of one of two kinds:
+   *         - an IllFormedTreeType with no IllFormedTreeFeatureBranch
+   *         - a TreeTypedFeatureBranch with an IllFormedTreeFeatureBranch.
+   */
+  def getIllFormedTreeBranchPairs[Uml <: UML]
+  ( treeType: TreeType[Uml] )
+  ( treeBranch: TreeFeatureBranch[Uml] )
+  : Seq[(TreeType[Uml], Option[IllFormedTreeFeatureBranch[Uml]])] =
     treeBranch match {
-      case ttb: TreeTypedFeatureBranch[Uml] => TreeType.isWellFormed(ttb.child)
-      case _ => false
+      case ttb: TreeTypedFeatureBranch[Uml] =>
+        TreeType.getIllFormedTreeBranchPairs(ttb.child)
+      case ttb: IllFormedTreeFeatureBranch[Uml] =>
+        Seq( Tuple2(treeType, Some(ttb)) )
     }
 
-  def makeTreeAssociationPropertyBranch[Uml <: UML](branch: UMLProperty[Uml],
-                                                    association: UMLAssociation[Uml]):
-  (TreeType[Uml] => TreeFeatureBranch[Uml]) =
+  def makeTreeAssociationPropertyBranch[Uml <: UML]
+  (branch: UMLProperty[Uml], association: UMLAssociation[Uml])
+  : (TreeType[Uml] => TreeFeatureBranch[Uml]) =
     (child: TreeType[Uml]) => TreeAssociationPropertyBranch(Some(branch), Some(association), child)
 
-  def makeTreeAssociationPortBranch[Uml <: UML](branch: UMLPort[Uml],
-                                                association: UMLAssociation[Uml]):
-  (TreeType[Uml] => TreeFeatureBranch[Uml]) =
+  def makeTreeAssociationPortBranch[Uml <: UML]
+  (branch: UMLPort[Uml], association: UMLAssociation[Uml])
+  : (TreeType[Uml] => TreeFeatureBranch[Uml]) =
     (child: TreeType[Uml]) => TreeAssociationPortBranch(Some(branch), Some(association), child)
 
-  def treeFeatureBranchOrdering[Uml <: UML]: Ordering[TreeFeatureBranch[Uml]] = new Ordering[TreeFeatureBranch[Uml]]() {
+  def treeFeatureBranchOrdering[Uml <: UML]: Ordering[TreeFeatureBranch[Uml]] =
+    new Ordering[TreeFeatureBranch[Uml]]() {
 
     def compare( x: TreeFeatureBranch[Uml], y: TreeFeatureBranch[Uml] ): Int = {
       require(x.branch.isDefined || x.association.isDefined)

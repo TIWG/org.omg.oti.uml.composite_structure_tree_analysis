@@ -40,6 +40,7 @@
 package org.omg.oti.uml.trees
 
 import org.omg.oti.uml.read.api._
+import scala.language.postfixOps
 
 /**
  * A UML Type (a kind of Class, except AssociationClass, or DataType) that
@@ -65,22 +66,28 @@ sealed trait TreeTypeWithBranches[Uml <: UML]
 
   val branches: Seq[TreeFeatureBranch[Uml]]
 
-  lazy val isWellFormed: Boolean = ???
+}
+
+case class TreeCompositeStructureType[Uml <: UML]
+( override val treeFeatureType: UMLClass[Uml],
+  override val branches: Seq[TreeFeatureBranch[Uml]])
+  extends TreeTypeWithBranches[Uml] {
+
+  import sext._
+
+  override def toString: String = this.treeString
 
 }
 
-case class TreeCompositeStructureType[Uml <: UML](override val treeFeatureType: UMLClass[Uml],
-                                                  override val branches: Seq[TreeFeatureBranch[Uml]])
+case class TreeStructuredDataType[Uml <: UML]
+( override val treeFeatureType: UMLDataType[Uml],
+  override val branches: Seq[TreeFeatureBranch[Uml]])
   extends TreeTypeWithBranches[Uml] {
-  override def toString: String = "TreeCompositeStructureType{treeFeatureType="+ treeFeatureType.qualifiedName.get +
-    ",\n "+branches.size+" branches:" + branches.mkString("\n ","\n ","\n}")
-}
 
-case class TreeDataType[Uml <: UML](override val treeFeatureType: UMLDataType[Uml],
-                                    override val branches: Seq[TreeFeatureBranch[Uml]])
-  extends TreeTypeWithBranches[Uml] {
-  override def toString: String = "TreeDataType{treeFeatureType="+ treeFeatureType.qualifiedName.get +
-    ",\n "+branches.size+" branches:" + branches.mkString("\n ","\n ","\n}")
+  import sext._
+
+  override def toString: String = this.treeString
+
 }
 
 
@@ -115,44 +122,73 @@ object IllFormedTreeTypeExplanation extends Enumeration {
 
 import IllFormedTreeTypeExplanation._
 
-case class IllFormedTreeType[Uml <: UML](
-                                          override val treeFeatureType: UMLType[Uml],
-                                          explanation: Seq[IllFormedTreeTypeExplanation],
-                                          nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]])
+case class IllFormedTreeType[Uml <: UML]
+( override val treeFeatureType: UMLType[Uml],
+  explanation: Seq[IllFormedTreeTypeExplanation],
+  nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]])
   extends TreeType[Uml] {
 
-  override def toString: String = s"IllFormedTreeType{treeFeatureType=" +
-    (treeFeatureType.qualifiedName match {
-    case None => treeFeatureType.id
-    case Some(qName) => qName
-  }) + "\nexplanation: " + explanation.mkString(", ") +
-  "\nnameConflicts: " + nameConflicts.mkString("\n") +
-  "\n}"
+  import sext._
+
+  override def toString: String = this.treeString
+
 }
 
 
 object TreeType {
 
-  def isWellFormed[Uml <: UML]( treeType: TreeType[Uml]): Boolean =
+  /**
+   * Collect ill-formed tree types and ill-formed tree type branches grouped by their owning tree type.
+   *
+   * @param treeType The root of the TreeType to collect ill-formed tree types & ill-formed tree type branches
+   * @tparam Uml
+   * @return A map with keys that are either:
+   *         - an IllFormedTreeType, in which case there are no TreeFeatureBranches because the type tree is ill-formed.
+   *         - a TreeTypedFeatureBranch, in which case there is at least one IllFormedTreeFeatureBranch.
+   */
+  def getIllFormedTreeBranches[Uml <: UML]
+  ( treeType: TreeType[Uml])
+  : Map[TreeType[Uml], Set[IllFormedTreeFeatureBranch[Uml]]] =
+    ( Map[TreeType[Uml], Set[IllFormedTreeFeatureBranch[Uml]]]() /: getIllFormedTreeBranchPairs(treeType) ) {
+      case ( acc, ( tt, ttb ) ) => acc.updated(tt, acc.getOrElse(tt, Set()) ++ ttb.toSet )
+   }
+
+  /**
+   * Collect pairs of either ill-formed tree types or of a tree type and and ill-formed tree type branch.
+   *
+   * @param treeType The root of the TreeType to collect ill-formed tree types & ill-formed tree type branches
+   * @tparam Uml
+   * @return A sequence of pairs of one of two kinds:
+   *         - an IllFormedTreeType with no IllFormedTreeFeatureBranch
+   *         - a TreeTypedFeatureBranch with an IllFormedTreeFeatureBranch.
+   */
+  def getIllFormedTreeBranchPairs[Uml <: UML]
+  ( treeType: TreeType[Uml])
+  : Seq[(TreeType[Uml], Option[IllFormedTreeFeatureBranch[Uml]])] =
     treeType match {
-      case tb: TreeTypeWithBranches[Uml] => tb.branches.forall(TreeFeatureBranch.isWellFormed)
-      case _ => false
+      case tb: TreeTypeWithBranches[Uml] =>
+        tb.branches flatMap TreeFeatureBranch.getIllFormedTreeBranchPairs(tb)
+      case tb: IllFormedTreeType[Uml] =>
+        Seq( Tuple2(tb, None) )
     }
 
-  def makeTreeType[Uml <: UML](treeFeatureType: UMLType[Uml]):
-  Seq[TreeFeatureBranch[Uml]] => TreeType[Uml] =
+  def makeTreeType[Uml <: UML]
+  (treeFeatureType: UMLType[Uml])
+  : Seq[TreeFeatureBranch[Uml]] => TreeType[Uml] =
     (branches: Seq[TreeFeatureBranch[Uml]]) =>
       treeFeatureType match {
         case treeFeatureClass: UMLClass[Uml] => TreeCompositeStructureType(treeFeatureClass, branches)
-        case treeFeatureDataType: UMLDataType[Uml] => TreeDataType(treeFeatureDataType, branches)
+        case treeFeatureDataType: UMLDataType[Uml] => TreeStructuredDataType(treeFeatureDataType, branches)
       }
 
-  def makeTreeCompositeStructureType[Uml <: UML](treeFeatureType: UMLClass[Uml]):
-  Seq[TreeFeatureBranch[Uml]] => TreeCompositeStructureType[Uml] =
+  def makeTreeCompositeStructureType[Uml <: UML]
+  (treeFeatureType: UMLClass[Uml])
+  : Seq[TreeFeatureBranch[Uml]] => TreeCompositeStructureType[Uml] =
     (branches: Seq[TreeFeatureBranch[Uml]]) => TreeCompositeStructureType(treeFeatureType, branches)
 
-  def makeTreeDataType[Uml <: UML](treeFeatureType: UMLDataType[Uml]):
-  Seq[TreeFeatureBranch[Uml]] => TreeDataType[Uml] =
-    (branches: Seq[TreeFeatureBranch[Uml]]) => TreeDataType(treeFeatureType, branches)
+  def makeTreeDataType[Uml <: UML]
+  (treeFeatureType: UMLDataType[Uml])
+  : Seq[TreeFeatureBranch[Uml]] => TreeStructuredDataType[Uml] =
+    (branches: Seq[TreeFeatureBranch[Uml]]) => TreeStructuredDataType(treeFeatureType, branches)
 
 }
