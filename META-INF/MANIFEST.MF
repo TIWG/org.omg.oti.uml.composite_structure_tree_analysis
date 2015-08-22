@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Trees
+Bundle-SymbolicName: org.omg.oti.trees;singleton:=true
+Bundle-Version: 0.16.0.qualifier
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: org.omg.oti;bundle-version="0.16.0"
+Bundle-ClassPath: .
