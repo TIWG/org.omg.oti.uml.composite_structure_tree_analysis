@@ -40,6 +40,7 @@
 package org.omg.oti.uml.trees
 
 import org.omg.oti.uml.read.api._
+import org.omg.oti.uml.canonicalXMI.IDGenerator
 
 /**
  * For a UML composite structure (class, but not a kind of association class) or UML DataType,
@@ -259,7 +260,10 @@ object TreeFeatureBranch {
   : (TreeType[Uml] => TreeFeatureBranch[Uml]) =
     (child: TreeType[Uml]) => TreeAssociationPortBranch(Some(branch), Some(association), child)
 
-  def treeFeatureBranchOrdering[Uml <: UML]: Ordering[TreeFeatureBranch[Uml]] =
+  def treeFeatureBranchOrdering[Uml <: UML]
+  ()
+  (implicit idg: IDGenerator[Uml])
+  : Ordering[TreeFeatureBranch[Uml]] =
     new Ordering[TreeFeatureBranch[Uml]]() {
 
     def compare( x: TreeFeatureBranch[Uml], y: TreeFeatureBranch[Uml] ): Int = {
@@ -271,14 +275,14 @@ object TreeFeatureBranch {
             case (Some(nx), Some(ny)) =>
               nx.compareTo(ny)
             case (_, _) =>
-              px.id.compareTo(py.id)
+              px.xmiID().compareTo(py.xmiID())
           }
         case (Some(px), _, None, Some(ay)) =>
-          px.id.compareTo(ay.id)
+          px.xmiID().compareTo(ay.xmiID())
         case (None, Some(ax), Some(py), _) =>
-          ax.id.compareTo(py.id)
+          ax.xmiID().compareTo(py.xmiID())
         case (None, Some(ax), None, Some(ay)) =>
-          ax.id.compareTo(ay.id)
+          ax.xmiID().compareTo(ay.xmiID())
       }
     }
 
