@@ -41,6 +41,15 @@ package org.omg.oti.uml
 
 import org.omg.oti.uml.read.api._
 
+/**
+ * Extension of OMG UML CompositeStructure with SysML PropertySpecificType and BlockSpecificType
+ *
+ * The main objective of OTI's tree analysis is to support the subtle but important
+ * distinction between
+ *   - the open-world semantics of UML Class & SysML Block Definition Diagrams
+ *   - the closed-world semantics of UML Composite Structure Diagrams,
+ *     SysML Internal Block Diagrams & SysML Parametric Diagrams.
+ */
 package object trees {
 
   def analyze[Uml <: UML]

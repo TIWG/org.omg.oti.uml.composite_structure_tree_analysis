@@ -41,6 +41,11 @@ package org.omg.oti.uml.trees
 
 import org.omg.oti.uml.read.api._
 
+/**
+ * Extension of UML Composite Structure with SysML's PropertySpecificType and JPL's proposal for SysML BlockSpecificType
+ *
+ * @tparam Uml The type signature for a tool-specific adaptation of the OTI UML API
+ */
 trait TreeOps[Uml <: UML] {
 
   /**
