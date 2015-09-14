@@ -40,7 +40,7 @@
 package org.omg.oti.uml.trees
 
 import org.omg.oti.uml.read.api._
-import org.omg.oti.uml.canonicalXMI.IDGenerator
+import org.omg.oti.uml.xmi.IDGenerator
 
 /**
  * For a UML composite structure (class, but not a kind of association class) or UML DataType,
