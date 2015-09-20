@@ -40,6 +40,12 @@
 package org.omg.oti.uml
 
 import org.omg.oti.uml.read.api._
+import org.omg.oti.uml.xmi.IDGenerator
+
+import scala.{Boolean,Option,None,Some,StringContext}
+import scala.Predef.{Set => _, Map => _, _}
+import scala.collection.immutable._
+import scala.language.postfixOps
 
 /**
  * Extension of OMG UML CompositeStructure with SysML PropertySpecificType and BlockSpecificType
@@ -54,13 +60,13 @@ package object trees {
 
   def analyze[Uml <: UML]
   (t: UMLType[Uml])
-  (implicit treeOps: TreeOps[Uml])
+  (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
   : TreeType[Uml] =
     trees.analyze(Seq(), t)
 
   def analyze[Uml <: UML]
   (treePath: Seq[UMLType[Uml]], t: UMLType[Uml])
-  (implicit treeOps: TreeOps[Uml])
+  (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
   : TreeType[Uml] =
     t match {
       case ta: UMLAssociationClass[Uml] =>
@@ -80,61 +86,66 @@ package object trees {
 
   def analyzeBranches[Uml <: UML]
   (treePath: Seq[UMLType[Uml]], treeContext: UMLClassifier[Uml])
-  (implicit treeOps: TreeOps[Uml])
+  (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
   : TreeType[Uml] = {
 
     val associationBranches: Seq[TreeFeatureBranch[Uml]] =
-      treeContext.endType_associationExceptRedefinedOrDerived.toSeq flatMap { a =>
+      treeContext
+      .endType_associationExceptRedefinedOrDerived
+      .toList.sortBy(_.xmiID())
+      .flatMap { a =>
+        val result: Seq[TreeFeatureBranch[Uml]] =
         if (a.memberEnd.size > 2)
-          Some(IllFormedTreeFeatureBranch(
+          Seq[TreeFeatureBranch[Uml]](IllFormedTreeFeatureBranch(
             None, Some(a), Seq(IllFormedTreeFeatureExplanation.NaryAssociation)))
         else
-          a.getDirectedAssociationEnd match {
+          a
+          .getDirectedAssociationEnd
+          .fold[Seq[TreeFeatureBranch[Uml]]]{
 
-            case None =>
-              Some(IllFormedTreeFeatureBranch(
+              Seq(IllFormedTreeFeatureBranch(
                 None, Some(a), Seq(IllFormedTreeFeatureExplanation.UndirectedBinaryAssociation)))
-
-            case Some((aFrom, aTo))
+          }{
+             case (aFrom, aTo)
               if treeContext.conformsTo(aFrom._type) =>
               val err_dataTypePort = (treeContext, aTo) match {
                 case (_: UMLDataType[Uml], _: UMLPort[Uml]) =>
-                  Some(IllFormedTreeFeatureExplanation.DataTypePort)
+                  Seq(IllFormedTreeFeatureExplanation.DataTypePort)
                 case _ =>
-                  None
+                  Seq()
               }
               val err_toType = aTo._type match {
                 case None =>
-                  Some(IllFormedTreeFeatureExplanation.UntypedAssociationToMemberEnd)
+                  Seq(IllFormedTreeFeatureExplanation.UntypedAssociationToMemberEnd)
                 case Some(tTo) =>
                   if (acyclicTypes(treePath, treeContext) && acyclicTypes(treePath :+ treeContext, tTo))
-                    None
+                    Seq()
                   else
-                    Some(IllFormedTreeFeatureExplanation.CircularTopology)
+                    Seq(IllFormedTreeFeatureExplanation.CircularTopology)
               }
               val err_toLower = aTo.lower.intValue match {
                 case 0 =>
-                  Some(IllFormedTreeFeatureExplanation.OptionalMultiplicity)
+                  Seq(IllFormedTreeFeatureExplanation.OptionalMultiplicity)
                 case l =>
                   if (l == 1)
-                    None
+                    Seq()
                   else
-                    Some(IllFormedTreeFeatureExplanation.CollectionMultiplicity)
+                    Seq(IllFormedTreeFeatureExplanation.CollectionMultiplicity)
               }
               val err_toUpper = aTo.upper.intValue match {
                 case 0 =>
-                  Some(IllFormedTreeFeatureExplanation.ZeroMultiplicity)
+                  Seq(IllFormedTreeFeatureExplanation.ZeroMultiplicity)
                 case l =>
                   if (l == 1)
-                    None
+                    Seq()
                   else
-                    Some(IllFormedTreeFeatureExplanation.CollectionMultiplicity)
+                    Seq(IllFormedTreeFeatureExplanation.CollectionMultiplicity)
               }
               val err_toNamed = aTo.name match {
                 case Some(_) =>
-                  None
+                  Seq()
                 case None =>
-                  Some(IllFormedTreeFeatureExplanation.UnnamedStructuralFeature)
+                  Seq(IllFormedTreeFeatureExplanation.UnnamedStructuralFeature)
               }
               err_dataTypePort.toList ++
                 err_toType.toList ++
@@ -145,30 +156,31 @@ package object trees {
                   require(aTo._type.isDefined)
                   aTo match {
                     case aToPort: UMLPort[Uml] =>
-                      Some(TreeAssociationPortBranch(
+                      Seq(TreeAssociationPortBranch(
                         Some(aToPort), Some(a), trees.analyze(treePath :+ treeContext, aTo._type.get)))
                     case aToProp: UMLProperty[Uml] =>
-                      Some(TreeAssociationPropertyBranch(
+                      Seq(TreeAssociationPropertyBranch(
                         Some(aToProp), Some(a), trees.analyze(treePath :+ treeContext, aTo._type.get)))
                   }
                 case problems =>
-                  Some(IllFormedTreeFeatureBranch(Some(aTo), Some(a), problems.toSeq))
+                  Seq(IllFormedTreeFeatureBranch(Some(aTo), Some(a), problems.toSeq))
               }
 
-            case Some((aFrom, aTo))
+            case (aFrom, aTo)
               if treeContext.conformsTo(aTo._type) =>
-              None
+              Seq()
 
-            case Some((aFrom, aTo)) =>
+            case (aFrom, aTo) =>
               aFrom._type match {
                 case None =>
-                  Some(IllFormedTreeFeatureBranch(None, Some(a),
+                  Seq(IllFormedTreeFeatureBranch(None, Some(a),
                     Seq(IllFormedTreeFeatureExplanation.UntypedAssociationFromMemberEnd)))
                 case Some(tFrom) =>
-                  Some(IllFormedTreeFeatureBranch(None, Some(a),
+                  Seq(IllFormedTreeFeatureBranch(None, Some(a),
                     Seq(IllFormedTreeFeatureExplanation.UnrelatedAssociationFromMemberEndType)))
               }
           }
+        result
       }
 
     val nonAssociationBranches: Seq[TreeFeatureBranch[Uml]] =

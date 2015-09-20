@@ -42,6 +42,10 @@ package org.omg.oti.uml.trees
 import org.omg.oti.uml.read.api._
 import scala.language.postfixOps
 
+import scala.{Enumeration,Option,None,Some,StringContext,Tuple2}
+import scala.Predef.{require,String}
+import scala.collection.immutable._
+
 /**
  * A UML Type (a kind of Class, except AssociationClass, or DataType) that
  * plays a structural role of some kind in the effective feature tree of
@@ -73,7 +77,7 @@ case class TreeCompositeStructureType[Uml <: UML]
   override val branches: Seq[TreeFeatureBranch[Uml]])
   extends TreeTypeWithBranches[Uml] {
 
-  import sext._
+  import sext.PrettyPrinting._
 
   override def toString: String = this.treeString
 
@@ -84,7 +88,7 @@ case class TreeStructuredDataType[Uml <: UML]
   override val branches: Seq[TreeFeatureBranch[Uml]])
   extends TreeTypeWithBranches[Uml] {
 
-  import sext._
+  import sext.PrettyPrinting._
 
   override def toString: String = this.treeString
 
@@ -128,7 +132,7 @@ case class IllFormedTreeType[Uml <: UML]
   nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]])
   extends TreeType[Uml] {
 
-  import sext._
+  import sext.PrettyPrinting._
 
   override def toString: String = this.treeString
 

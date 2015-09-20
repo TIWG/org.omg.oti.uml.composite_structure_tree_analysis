@@ -42,6 +42,11 @@ package org.omg.oti.uml.trees
 import org.omg.oti.uml.read.api._
 import org.omg.oti.uml.xmi.IDGenerator
 
+import scala.{Enumeration,Int,Option,Ordering,None,Some,StringContext,Tuple2,unchecked}
+import scala.Predef.{require,String}
+import scala.collection.immutable._
+import scala.language.postfixOps
+
 /**
  * For a UML composite structure (class, but not a kind of association class) or UML DataType,
  * each feature that plays a role in the structure of the composite has a corresponding TreeFeatureBranch.
@@ -78,9 +83,10 @@ case class TreePropertyBranch[Uml <: UML]
   override val child: TreeType[Uml])
   extends TreeTypedFeatureBranch[Uml] {
 
-  import sext._
+  import sext.PrettyPrinting._
 
-  override def toString: String = this.valueTreeString
+  override def toString: String =
+    this.valueTreeString
 
 }
 
@@ -89,15 +95,15 @@ case class TreeAssociationPropertyBranch[Uml <: UML]
   override val association: Some[UMLAssociation[Uml]],
   override val child: TreeType[Uml] )
   extends TreeTypedFeatureBranch[Uml] {
-  import sext._
+  import sext.PrettyPrinting._
 
-  override lazy val name: String = branch.get.owningAssociation match {
-    case Some(a) =>
+  override lazy val name: String =
+    branch
+    .get.owningAssociation
+    .fold[String]( ifEmpty = branch.get.name.getOrElse("") ) { a =>
       require(a == association.get)
       a.name.get+"."+branch.get.name.get
-    case None =>
-      branch.get.name.get
-  }
+    }
 
   override def toString: String = this.treeString
 }
@@ -107,9 +113,10 @@ case class TreePortBranch[Uml <: UML]
   override val child: TreeType[Uml])
   extends TreeTypedFeatureBranch[Uml] {
 
-  import sext._
+  import sext.PrettyPrinting._
 
-  override def toString: String = this.treeString
+  override def toString: String =
+    this.treeString
 }
 
 case class TreeAssociationPortBranch[Uml <: UML]
@@ -118,9 +125,10 @@ case class TreeAssociationPortBranch[Uml <: UML]
   override val child: TreeType[Uml])
   extends TreeTypedFeatureBranch[Uml] {
 
-  import sext._
+  import sext.PrettyPrinting._
 
-  override def toString: String = this.treeString
+  override def toString: String =
+    this.treeString
 }
 
 /**
@@ -222,9 +230,10 @@ case class IllFormedTreeFeatureBranch[Uml <: UML]
   explanation: Seq[IllFormedTreeFeatureExplanation])
   extends TreeFeatureBranch[Uml] {
 
-  import sext._
+  import sext.PrettyPrinting._
 
-  override def toString: String = this.treeString
+  override def toString: String =
+    this.treeString
 }
 
 object TreeFeatureBranch {
@@ -269,20 +278,27 @@ object TreeFeatureBranch {
     def compare( x: TreeFeatureBranch[Uml], y: TreeFeatureBranch[Uml] ): Int = {
       require(x.branch.isDefined || x.association.isDefined)
       require(y.branch.isDefined || y.association.isDefined)
-      ((x.branch, x.association, y.branch, y.association) : @unchecked) match {
-        case (Some(px), _, Some(py), _) =>
-          (px.name, py.name) match {
-            case (Some(nx), Some(ny)) =>
-              nx.compareTo(ny)
-            case (_, _) =>
-              px.xmiID().compareTo(py.xmiID())
-          }
-        case (Some(px), _, None, Some(ay)) =>
+      x.branch.fold[Int]{
+        require(x.association.isDefined)
+        val axID = x.association.get.xmiID()
+        y.branch.fold[Int]{
+          require(y.association.isDefined)
+          val ay = y.association.get
+          axID.compareTo(ay.xmiID())
+        }{ py =>
+          axID.compareTo(py.xmiID())
+        }
+      }{ px =>
+        y.branch.fold[Int]{
+          require(y.association.isDefined)
+          val ay = y.association.get
           px.xmiID().compareTo(ay.xmiID())
-        case (None, Some(ax), Some(py), _) =>
-          ax.xmiID().compareTo(py.xmiID())
-        case (None, Some(ax), None, Some(ay)) =>
-          ax.xmiID().compareTo(ay.xmiID())
+        }{ py =>
+          if (px.name.isDefined && py.name.isDefined)
+            px.name.get.compareTo(py.name.get)
+          else
+            px.xmiID().compareTo(py.xmiID())
+        }
       }
     }
 

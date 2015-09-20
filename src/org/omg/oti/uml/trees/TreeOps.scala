@@ -41,6 +41,8 @@ package org.omg.oti.uml.trees
 
 import org.omg.oti.uml.read.api._
 
+import scala.Boolean
+
 /**
  * Extension of UML Composite Structure with SysML's PropertySpecificType and JPL's proposal for SysML BlockSpecificType
  *
@@ -69,8 +71,10 @@ trait TreeOps[Uml <: UML] {
   def isPartPropertySpecificType(treeType: UMLClassifier[Uml]): Boolean
 
   def hasClosedWorldInterpretation(treeType: UMLClassifier[Uml], p: UMLProperty[Uml]): Boolean =
-    p._type match {
-      case Some(featureType: UMLClassifier[Uml]) =>
+    p
+    ._type
+    .fold[Boolean](false) {
+      case featureType: UMLClassifier[Uml] =>
         (isRootBlockSpecificType(treeType) || isPartPropertySpecificType(treeType)) &&
           isPartPropertySpecificType(featureType) ||
           !isRootBlockSpecificType(treeType) &&
