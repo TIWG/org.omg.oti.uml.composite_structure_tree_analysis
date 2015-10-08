@@ -48,7 +48,15 @@ case class TreeOpsException[Uml <: UML]
 (treeOps: TreeOps[Uml],
  message: String,
  t: java.lang.Throwable)
-extends java.lang.Exception(message, t)
+extends java.lang.Exception(message, t) {
+
+  /**
+   * This type member is intended to facilitate pattern matching
+   * using a wildcard for the type parameter, i.e., TreeOpsException[_]
+   * The type information can then be checked using the UmlType member.
+   */
+  type UmlType = Uml
+}
 
 /**
  * Extension of UML Composite Structure with SysML's PropertySpecificType and JPL's proposal for SysML BlockSpecificType
