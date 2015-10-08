@@ -42,6 +42,13 @@ package org.omg.oti.uml.trees
 import org.omg.oti.uml.read.api._
 
 import scala.Boolean
+import scala.Predef.String
+
+case class TreeOpsException[Uml <: UML]
+(treeOps: TreeOps[Uml],
+ message: String,
+ t: java.lang.Throwable)
+extends java.lang.Exception(message, t)
 
 /**
  * Extension of UML Composite Structure with SysML's PropertySpecificType and JPL's proposal for SysML BlockSpecificType
