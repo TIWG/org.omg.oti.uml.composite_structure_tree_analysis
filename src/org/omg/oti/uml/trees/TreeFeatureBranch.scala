@@ -244,6 +244,14 @@ case class IllFormedTreeFeatureBranch[Uml <: UML]
 
 object TreeFeatureBranch {
 
+  def illFormedTreeFeatureBranch[Uml <: UML]
+  ( branch: Option[UMLStructuralFeature[Uml]],
+    association: Option[UMLAssociation[Uml]],
+    explanation: Seq[IllFormedTreeFeatureExplanation],
+    error: Option[java.lang.Throwable] = None)
+  : UMLError.UException =
+    IllFormedTreeFeatureBranch[Uml](branch, association, explanation, error)
+
   implicit def TreeFeatureBranchSeqSemigroup[Uml <: UML]: Semigroup[Seq[TreeFeatureBranch[Uml]]] =
     Semigroup.instance(_ ++ _)
 

@@ -77,7 +77,7 @@ package object trees {
       case td: UMLDataType[Uml] =>
         analyzeBranches(treePath, td)
       case _t =>
-        IllFormedTreeType(_t, Seq(IllFormedTreeTypeExplanation.NotCompositeStructureOrDataType), Map()).failureNel
+        TreeType.illFormedTreeType(_t, Seq(IllFormedTreeTypeExplanation.NotCompositeStructureOrDataType), Map()).failureNel
     }
 
   def acyclicTypes[Uml <: UML]
@@ -102,12 +102,12 @@ package object trees {
 
         val inc: ValidationNel[UMLError.UException, Seq[TreeFeatureBranch[Uml]]] =
         if (a.memberEnd.size > 2)
-          IllFormedTreeFeatureBranch(None, Some(a), Seq(IllFormedTreeFeatureExplanation.NaryAssociation)).failureNel
+          TreeFeatureBranch.illFormedTreeFeatureBranch(None, Some(a), Seq(IllFormedTreeFeatureExplanation.NaryAssociation)).failureNel
         else
           a
           .getDirectedAssociationEnd
           .fold[ValidationNel[UMLError.UException, Seq[TreeFeatureBranch[Uml]]]]{
-            IllFormedTreeFeatureBranch(None, Some(a), Seq(IllFormedTreeFeatureExplanation.UndirectedBinaryAssociation)).failureNel
+            TreeFeatureBranch.illFormedTreeFeatureBranch(None, Some(a), Seq(IllFormedTreeFeatureExplanation.UndirectedBinaryAssociation)).failureNel
           }{
              case (aFrom, aTo)
               if treeContext.conformsTo(aFrom._type) =>
@@ -172,7 +172,7 @@ package object trees {
                       }
                   }
                 case problems =>
-                  IllFormedTreeFeatureBranch(Some(aTo), Some(a), problems.toSeq).failureNel
+                  TreeFeatureBranch.illFormedTreeFeatureBranch(Some(aTo), Some(a), problems.toSeq).failureNel
               }
 
             case (aFrom, aTo)
@@ -182,10 +182,10 @@ package object trees {
             case (aFrom, aTo) =>
               aFrom._type match {
                 case None =>
-                  IllFormedTreeFeatureBranch(None, Some(a),
+                  TreeFeatureBranch.illFormedTreeFeatureBranch(None, Some(a),
                     Seq(IllFormedTreeFeatureExplanation.UntypedAssociationFromMemberEnd)).failureNel
                 case Some(tFrom) =>
-                  IllFormedTreeFeatureBranch(None, Some(a),
+                  TreeFeatureBranch.illFormedTreeFeatureBranch(None, Some(a),
                     Seq(IllFormedTreeFeatureExplanation.UnrelatedAssociationFromMemberEndType)).failureNel
               }
           }
@@ -270,7 +270,7 @@ package object trees {
                 }
             }
           case problems =>
-            IllFormedTreeFeatureBranch(Some(p), None, problems.toSeq).failureNel
+            TreeFeatureBranch.illFormedTreeFeatureBranch(Some(p), None, problems.toSeq).failureNel
         }
 
         pi +++ inc
@@ -296,7 +296,7 @@ package object trees {
         if (nameConflicts.isEmpty)
           \/-(TreeType.makeTreeType(treeContext)(allBranches))
         else
-          -\/(IllFormedTreeType(treeContext, Seq(IllFormedTreeTypeExplanation.FeatureNameConflicts), nameConflicts).wrapNel)
+          -\/(TreeType.illFormedTreeType(treeContext, Seq(IllFormedTreeTypeExplanation.FeatureNameConflicts), nameConflicts).wrapNel)
     }).validation
 
   }
