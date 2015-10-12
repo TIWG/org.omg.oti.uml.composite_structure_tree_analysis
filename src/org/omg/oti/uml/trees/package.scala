@@ -46,6 +46,7 @@ import scala.{Boolean,Option,None,Some,StringContext}
 import scala.Predef.{Set => _, Map => _, _}
 import scala.collection.immutable._
 import scala.language.postfixOps
+import scalaz._, Scalaz._
 
 /**
  * Extension of OMG UML CompositeStructure with SysML PropertySpecificType and BlockSpecificType
@@ -61,13 +62,13 @@ package object trees {
   def analyze[Uml <: UML]
   (t: UMLType[Uml])
   (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
-  : TreeType[Uml] =
+  : ValidationNel[UMLError.UException, TreeType[Uml]] =
     trees.analyze(Seq(), t)
 
   def analyze[Uml <: UML]
   (treePath: Seq[UMLType[Uml]], t: UMLType[Uml])
   (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
-  : TreeType[Uml] =
+  : ValidationNel[UMLError.UException, TreeType[Uml]] =
     t match {
       case ta: UMLAssociationClass[Uml] =>
         analyzeBranches(treePath, ta)
@@ -76,7 +77,7 @@ package object trees {
       case td: UMLDataType[Uml] =>
         analyzeBranches(treePath, td)
       case _t =>
-        IllFormedTreeType(_t, Seq(IllFormedTreeTypeExplanation.NotCompositeStructureOrDataType), Map())
+        IllFormedTreeType(_t, Seq(IllFormedTreeTypeExplanation.NotCompositeStructureOrDataType), Map()).failureNel
     }
 
   def acyclicTypes[Uml <: UML]
@@ -87,24 +88,26 @@ package object trees {
   def analyzeBranches[Uml <: UML]
   (treePath: Seq[UMLType[Uml]], treeContext: UMLClassifier[Uml])
   (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
-  : TreeType[Uml] = {
+  : ValidationNel[UMLError.UException, TreeType[Uml]] = {
 
-    val associationBranches: Seq[TreeFeatureBranch[Uml]] =
-      treeContext
-      .endType_associationExceptRedefinedOrDerived
-      .toList.sortBy(_.xmiID())
-      .flatMap { a =>
-        val result: Seq[TreeFeatureBranch[Uml]] =
+    val associationBranches: ValidationNel[UMLError.UException, Seq[TreeFeatureBranch[Uml]]] = {
+
+      val associations = treeContext
+        .endType_associationExceptRedefinedOrDerived
+        .toList.sortBy(_.xmiID().toOption.getOrElse("")) // @todo propagate errors
+
+      val a0: ValidationNel[UMLError.UException, Seq[TreeFeatureBranch[Uml]]] = Seq().success
+      val aN: ValidationNel[UMLError.UException, Seq[TreeFeatureBranch[Uml]]] =
+        (a0 /: associations) { (ai, a) =>
+
+        val inc: ValidationNel[UMLError.UException, Seq[TreeFeatureBranch[Uml]]] =
         if (a.memberEnd.size > 2)
-          Seq[TreeFeatureBranch[Uml]](IllFormedTreeFeatureBranch(
-            None, Some(a), Seq(IllFormedTreeFeatureExplanation.NaryAssociation)))
+          IllFormedTreeFeatureBranch(None, Some(a), Seq(IllFormedTreeFeatureExplanation.NaryAssociation)).failureNel
         else
           a
           .getDirectedAssociationEnd
-          .fold[Seq[TreeFeatureBranch[Uml]]]{
-
-              Seq(IllFormedTreeFeatureBranch(
-                None, Some(a), Seq(IllFormedTreeFeatureExplanation.UndirectedBinaryAssociation)))
+          .fold[ValidationNel[UMLError.UException, Seq[TreeFeatureBranch[Uml]]]]{
+            IllFormedTreeFeatureBranch(None, Some(a), Seq(IllFormedTreeFeatureExplanation.UndirectedBinaryAssociation)).failureNel
           }{
              case (aFrom, aTo)
               if treeContext.conformsTo(aFrom._type) =>
@@ -156,38 +159,55 @@ package object trees {
                   require(aTo._type.isDefined)
                   aTo match {
                     case aToPort: UMLPort[Uml] =>
-                      Seq(TreeAssociationPortBranch(
-                        Some(aToPort), Some(a), trees.analyze(treePath :+ treeContext, aTo._type.get)))
+                      trees.analyze(treePath :+ treeContext, aTo._type.get)
+                      .map { tree =>
+                        Seq(TreeAssociationPortBranch(
+                          Some(aToPort), Some(a), tree))
+                      }
                     case aToProp: UMLProperty[Uml] =>
-                      Seq(TreeAssociationPropertyBranch(
-                        Some(aToProp), Some(a), trees.analyze(treePath :+ treeContext, aTo._type.get)))
+                      trees.analyze(treePath :+ treeContext, aTo._type.get)
+                      .map { tree =>
+                        Seq(TreeAssociationPropertyBranch(
+                          Some(aToProp), Some(a), tree))
+                      }
                   }
                 case problems =>
-                  Seq(IllFormedTreeFeatureBranch(Some(aTo), Some(a), problems.toSeq))
+                  IllFormedTreeFeatureBranch(Some(aTo), Some(a), problems.toSeq).failureNel
               }
 
             case (aFrom, aTo)
               if treeContext.conformsTo(aTo._type) =>
-              Seq()
+              Seq().successNel
 
             case (aFrom, aTo) =>
               aFrom._type match {
                 case None =>
-                  Seq(IllFormedTreeFeatureBranch(None, Some(a),
-                    Seq(IllFormedTreeFeatureExplanation.UntypedAssociationFromMemberEnd)))
+                  IllFormedTreeFeatureBranch(None, Some(a),
+                    Seq(IllFormedTreeFeatureExplanation.UntypedAssociationFromMemberEnd)).failureNel
                 case Some(tFrom) =>
-                  Seq(IllFormedTreeFeatureBranch(None, Some(a),
-                    Seq(IllFormedTreeFeatureExplanation.UnrelatedAssociationFromMemberEndType)))
+                  IllFormedTreeFeatureBranch(None, Some(a),
+                    Seq(IllFormedTreeFeatureExplanation.UnrelatedAssociationFromMemberEndType)).failureNel
               }
           }
-        result
+
+        ai +++ inc
       }
 
-    val nonAssociationBranches: Seq[TreeFeatureBranch[Uml]] =
-      treeContext.allAttributesExceptRedefined.filter { p =>
+      aN
+    }
+
+    val nonAssociationBranches: ValidationNel[UMLError.UException, Seq[TreeFeatureBranch[Uml]]] = {
+
+      val properties = treeContext.allAttributesExceptRedefined.filter { p =>
         p.association.isEmpty &&
-          p.aggregation == UMLAggregationKind.composite &&
-          treeOps.hasClosedWorldInterpretation(treeContext, p) } map { p =>
+          p.aggregation.contains(UMLAggregationKind.composite) &&
+          treeOps.hasClosedWorldInterpretation(treeContext, p)
+      }
+
+      val p0: ValidationNel[UMLError.UException, Seq[TreeFeatureBranch[Uml]]] = Seq().success
+      val pN: ValidationNel[UMLError.UException, Seq[TreeFeatureBranch[Uml]]] =
+        (p0 /: properties) { (pi, p) =>
+
         val err_dataTypePort = (treeContext, p) match {
           case (_: UMLDataType[Uml], _: UMLPort[Uml]) =>
             Some(IllFormedTreeFeatureExplanation.DataTypePort)
@@ -228,7 +248,9 @@ package object trees {
           case Some(_) => None
           case None => Some(IllFormedTreeFeatureExplanation.UnnamedStructuralFeature)
         }
-        err_dataTypePort.toList ++
+
+        val inc =
+          err_dataTypePort.toList ++
           err_pType.toList ++
           err_pLower.toList ++
           err_pUpper.toList ++
@@ -237,29 +259,45 @@ package object trees {
             require(p._type.isDefined)
             p match {
               case port: UMLPort[Uml] =>
-                TreePortBranch(Some(port), trees.analyze(treePath :+ treeContext, p._type.get))
+                trees.analyze(treePath :+ treeContext, p._type.get)
+                .map{ tree =>
+                  Seq(TreePortBranch(Some(port), tree))
+                }
               case prop: UMLProperty[Uml] =>
-                TreePropertyBranch(Some(prop), trees.analyze(treePath :+ treeContext, p._type.get))
+                trees.analyze(treePath :+ treeContext, p._type.get)
+                .map { tree =>
+                  Seq(TreePropertyBranch(Some(prop), tree))
+                }
             }
           case problems =>
-            IllFormedTreeFeatureBranch(Some(p), None, problems.toSeq)
+            IllFormedTreeFeatureBranch(Some(p), None, problems.toSeq).failureNel
         }
+
+        pi +++ inc
       }
 
-    val allBranches = associationBranches ++ nonAssociationBranches
-
-    val allTypedBranches: Seq[TreeTypedFeatureBranch[Uml]] = allBranches.flatMap {
-      case b: TreeTypedFeatureBranch[Uml] =>
-        Some(b)
-      case _ =>
-        None
+      pN
     }
 
-    val nameConflicts = allTypedBranches.groupBy(_.name).filter(_._2.size > 1)
+    (associationBranches +++ nonAssociationBranches)
+      .disjunction
+      .flatMap[NonEmptyList[UMLError.UException], TreeType[Uml]]( (allBranches: Seq[TreeFeatureBranch[Uml]]) => {
 
-    if (nameConflicts.isEmpty)
-      TreeType.makeTreeType(treeContext)(allBranches)
-    else
-      IllFormedTreeType(treeContext, Seq(IllFormedTreeTypeExplanation.FeatureNameConflicts), nameConflicts)
+        val allTypedBranches: Seq[TreeTypedFeatureBranch[Uml]] =
+          allBranches.flatMap {
+            case b: TreeTypedFeatureBranch[Uml] =>
+              Some(b)
+            case _ =>
+              None
+          }
+
+        val nameConflicts = allTypedBranches.groupBy(_.name).filter(_._2.size > 1)
+
+        if (nameConflicts.isEmpty)
+          \/-(TreeType.makeTreeType(treeContext)(allBranches))
+        else
+          -\/(IllFormedTreeType(treeContext, Seq(IllFormedTreeTypeExplanation.FeatureNameConflicts), nameConflicts).wrapNel)
+    }).validation
+
   }
 }

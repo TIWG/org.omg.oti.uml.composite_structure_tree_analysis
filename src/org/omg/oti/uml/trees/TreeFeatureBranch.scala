@@ -39,14 +39,15 @@
  */
 package org.omg.oti.uml.trees
 
+import org.omg.oti.uml.UMLError
 import org.omg.oti.uml.read.api._
 import org.omg.oti.uml.xmi.IDGenerator
 
-import scala.{Enumeration,Int,Option,Ordering,None,Some,StringContext,Tuple2,unchecked}
+import scala.{Enumeration,Int,Option,None,Some,StringContext,Tuple2,unchecked}
 import scala.Predef.{require,String}
 import scala.collection.immutable._
 import scala.language.postfixOps
-
+import scalaz._, Scalaz._
 /**
  * For a UML composite structure (class, but not a kind of association class) or UML DataType,
  * each feature that plays a role in the structure of the composite has a corresponding TreeFeatureBranch.
@@ -227,16 +228,25 @@ import IllFormedTreeFeatureExplanation._
 case class IllFormedTreeFeatureBranch[Uml <: UML]
 ( override val branch: Option[UMLStructuralFeature[Uml]],
   override val association: Option[UMLAssociation[Uml]],
-  explanation: Seq[IllFormedTreeFeatureExplanation])
-  extends TreeFeatureBranch[Uml] {
+  explanation: Seq[IllFormedTreeFeatureExplanation],
+  override val error: Option[java.lang.Throwable] = None)
+  extends TreeFeatureBranch[Uml]
+  with UMLError.UException {
 
   import sext.PrettyPrinting._
+
+  override val message: String =
+    this.toString
 
   override def toString: String =
     this.treeString
 }
 
 object TreeFeatureBranch {
+
+  implicit def TreeFeatureBranchSeqSemigroup[Uml <: UML]: Semigroup[Seq[TreeFeatureBranch[Uml]]] =
+    Semigroup.instance(_ ++ _)
+
 
   /**
    * Collect pairs of either ill-formed tree types or of a tree type and and ill-formed tree type branch.
@@ -272,36 +282,17 @@ object TreeFeatureBranch {
   def treeFeatureBranchOrdering[Uml <: UML]
   ()
   (implicit idg: IDGenerator[Uml])
-  : Ordering[TreeFeatureBranch[Uml]] =
-    new Ordering[TreeFeatureBranch[Uml]]() {
-
-    def compare( x: TreeFeatureBranch[Uml], y: TreeFeatureBranch[Uml] ): Int = {
-      require(x.branch.isDefined || x.association.isDefined)
-      require(y.branch.isDefined || y.association.isDefined)
-      x.branch.fold[Int]{
-        require(x.association.isDefined)
-        val axID = x.association.get.xmiID()
-        y.branch.fold[Int]{
-          require(y.association.isDefined)
-          val ay = y.association.get
-          axID.compareTo(ay.xmiID())
-        }{ py =>
-          axID.compareTo(py.xmiID())
-        }
-      }{ px =>
-        y.branch.fold[Int]{
-          require(y.association.isDefined)
-          val ay = y.association.get
-          px.xmiID().compareTo(ay.xmiID())
-        }{ py =>
-          if (px.name.isDefined && py.name.isDefined)
-            px.name.get.compareTo(py.name.get)
-          else
-            px.xmiID().compareTo(py.xmiID())
-        }
+  : Order[TreeFeatureBranch[Uml]] =
+    Order[String].contramap[TreeFeatureBranch[Uml]]( (x: TreeFeatureBranch[Uml]) => {
+      (x.branch, x.association) match {
+        case (Some(sf), _) =>
+          sf.xmiID().toOption.getOrElse(sf.name.getOrElse(""))
+        case (None, Some(a)) =>
+          a.xmiID().toOption.getOrElse(a.name.getOrElse(""))
+        case (_, _) =>
+          require(false, "branch or association must be defined")
+          ""
       }
-    }
-
-  }
+    })
 
 }

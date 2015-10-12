@@ -39,6 +39,7 @@
  */
 package org.omg.oti.uml.trees
 
+import org.omg.oti.uml.UMLError
 import org.omg.oti.uml.read.api._
 import scala.language.postfixOps
 
@@ -129,10 +130,15 @@ import IllFormedTreeTypeExplanation._
 case class IllFormedTreeType[Uml <: UML]
 ( override val treeFeatureType: UMLType[Uml],
   explanation: Seq[IllFormedTreeTypeExplanation],
-  nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]])
-  extends TreeType[Uml] {
+  nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]],
+  override val error: Option[java.lang.Throwable] = None)
+  extends TreeType[Uml]
+  with UMLError.UException {
 
   import sext.PrettyPrinting._
+
+  override val message: String =
+    this.toString
 
   override def toString: String = this.treeString
 
