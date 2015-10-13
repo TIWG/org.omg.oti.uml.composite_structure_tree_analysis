@@ -225,13 +225,13 @@ object IllFormedTreeFeatureExplanation extends Enumeration {
 
 import IllFormedTreeFeatureExplanation._
 
-case class IllFormedTreeFeatureBranch[Uml <: UML]
+class IllFormedTreeFeatureBranch[Uml <: UML]
 ( override val branch: Option[UMLStructuralFeature[Uml]],
   override val association: Option[UMLAssociation[Uml]],
   explanation: Seq[IllFormedTreeFeatureExplanation],
-  override val error: Option[java.lang.Throwable] = None)
-  extends TreeFeatureBranch[Uml]
-  with UMLError.UException {
+  override val cause: Option[java.lang.Throwable] = None)
+  extends UMLError.UException("IllFormedTreeFeatureBranch", cause)
+  with TreeFeatureBranch[Uml] {
 
   import sext.PrettyPrinting._
 
@@ -248,9 +248,9 @@ object TreeFeatureBranch {
   ( branch: Option[UMLStructuralFeature[Uml]],
     association: Option[UMLAssociation[Uml]],
     explanation: Seq[IllFormedTreeFeatureExplanation],
-    error: Option[java.lang.Throwable] = None)
+    cause: Option[java.lang.Throwable] = None)
   : UMLError.UException =
-    IllFormedTreeFeatureBranch[Uml](branch, association, explanation, error)
+    new IllFormedTreeFeatureBranch[Uml](branch, association, explanation, cause)
 
   implicit def TreeFeatureBranchSeqSemigroup[Uml <: UML]: Semigroup[Seq[TreeFeatureBranch[Uml]]] =
     Semigroup.instance(_ ++ _)

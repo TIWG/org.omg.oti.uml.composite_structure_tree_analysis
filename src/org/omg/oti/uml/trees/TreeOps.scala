@@ -45,11 +45,11 @@ import org.omg.oti.uml.read.api._
 import scala.{Boolean,Option,None}
 import scala.Predef.String
 
-case class TreeOpsException[Uml <: UML]
+class TreeOpsException[Uml <: UML]
 (treeOps: TreeOps[Uml],
  override val message: String,
- override val error: Option[java.lang.Throwable] = None)
-extends UMLError.UException {
+ override val cause: Option[java.lang.Throwable] = None)
+extends UMLError.UException(message, cause) {
 
   /**
    * This type member is intended to facilitate pattern matching
