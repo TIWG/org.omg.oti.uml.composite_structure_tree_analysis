@@ -44,6 +44,7 @@ import org.omg.oti.uml.read.api._
 
 import scala.{Boolean,Option,None}
 import scala.Predef.String
+import scalaz._
 
 class TreeOpsException[Uml <: UML]
 (treeOps: TreeOps[Uml],
@@ -74,7 +75,8 @@ trait TreeOps[Uml <: UML] {
    * @param treeType The SysML Block context to check for an open vs. closed world interpretation
    * @return
    */
-  def isRootBlockSpecificType(treeType: UMLClassifier[Uml]): Boolean
+  def isRootBlockSpecificType(treeType: UMLClassifier[Uml])
+  : \/[NonEmptyList[UMLError.UException], Boolean]
 
   /**
    * Predicate for the open-world (false) vs. closed-world(true) interpretation of the features
@@ -84,20 +86,24 @@ trait TreeOps[Uml <: UML] {
    * @param treeType The SysML Block context to check for an open vs. closed world interpretation
    * @return
    */
-  def isPartPropertySpecificType(treeType: UMLClassifier[Uml]): Boolean
+  def isPartPropertySpecificType(treeType: UMLClassifier[Uml])
+  : \/[NonEmptyList[UMLError.UException], Boolean]
 
-  def hasClosedWorldInterpretation(treeType: UMLClassifier[Uml], p: UMLProperty[Uml]): Boolean =
+  def hasClosedWorldInterpretation(treeType: UMLClassifier[Uml], p: UMLProperty[Uml])
+  : \/[NonEmptyList[UMLError.UException], Boolean] =
     p
     ._type
-    .fold[Boolean](false) {
+    .fold[\/[NonEmptyList[UMLError.UException], Boolean]](\/-(false)) {
       case featureType: UMLClassifier[Uml] =>
-        (isRootBlockSpecificType(treeType) || isPartPropertySpecificType(treeType)) &&
-          isPartPropertySpecificType(featureType) ||
-          !isRootBlockSpecificType(treeType) &&
-            !isPartPropertySpecificType(treeType) &&
-            !isPartPropertySpecificType(featureType)
+        for {
+          treeTypeIsRootBST <- isRootBlockSpecificType(treeType)
+          treeTypeIsPartPST <- isPartPropertySpecificType(treeType)
+          featureTypeIsPartPST <- isPartPropertySpecificType(featureType)
+        } yield
+          (treeTypeIsRootBST || treeTypeIsPartPST) && featureTypeIsPartPST ||
+          !treeTypeIsRootBST && !treeTypeIsPartPST && !featureTypeIsPartPST
 
       case _ =>
-        false
+        \/-(false)
     }
 }

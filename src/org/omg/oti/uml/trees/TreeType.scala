@@ -147,14 +147,6 @@ class IllFormedTreeType[Uml <: UML]
 
 object TreeType {
 
-  def illFormedTreeType[Uml <: UML]
-  ( treeFeatureType: UMLType[Uml],
-    explanation: Seq[IllFormedTreeTypeExplanation],
-    nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]],
-    error: Option[java.lang.Throwable] = None)
-  : UMLError.UException =
-    new IllFormedTreeType[Uml](treeFeatureType, explanation, nameConflicts, error)
-
   /**
    * Collect ill-formed tree types and ill-formed tree type branches grouped by their owning tree type.
    *
