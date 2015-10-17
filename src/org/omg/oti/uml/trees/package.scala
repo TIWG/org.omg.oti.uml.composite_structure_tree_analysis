@@ -85,13 +85,13 @@ package object trees {
   def analyze[Uml <: UML]
   (t: UMLType[Uml])
   (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
-  : \/[NonEmptyList[UMLError.UException], TreeType[Uml]] =
+  : NonEmptyList[UMLError.UException] \/ TreeType[Uml] =
     trees.analyze(Seq(), t)
 
   def analyze[Uml <: UML]
   (treePath: Seq[UMLType[Uml]], t: UMLType[Uml])
   (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
-  : \/[NonEmptyList[UMLError.UException], TreeType[Uml]] =
+  : NonEmptyList[UMLError.UException] \/ TreeType[Uml] =
     t match {
       case ta: UMLAssociationClass[Uml] =>
         analyzeBranches(treePath, ta)
@@ -113,22 +113,22 @@ package object trees {
   def analyzeBranches[Uml <: UML]
   (treePath: Seq[UMLType[Uml]], treeContext: UMLClassifier[Uml])
   (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
-  : \/[NonEmptyList[UMLError.UException], TreeType[Uml]] = {
+  : NonEmptyList[UMLError.UException] \/ TreeType[Uml] = {
 
     implicit def UMLPropertySeqSemigroup: Semigroup[Seq[UMLProperty[Uml]]] =
       Semigroup.instance(_ ++ _)
 
-    val associationBranches: \/[NonEmptyList[UMLError.UException], Seq[TreeFeatureBranch[Uml]]] = {
+    val associationBranches: NonEmptyList[UMLError.UException] \/ Seq[TreeFeatureBranch[Uml]] = {
 
       val associations = treeContext
         .endType_associationExceptRedefinedOrDerived
         .toList.sortBy(_.xmiID().toOption.getOrElse("")) // @todo propagate errors
 
-      val a0: \/[NonEmptyList[UMLError.UException], Seq[TreeFeatureBranch[Uml]]] = Seq().right
-      val aN: \/[NonEmptyList[UMLError.UException], Seq[TreeFeatureBranch[Uml]]] =
+      val a0: NonEmptyList[UMLError.UException] \/ Seq[TreeFeatureBranch[Uml]] = Seq().right
+      val aN: NonEmptyList[UMLError.UException] \/ Seq[TreeFeatureBranch[Uml]] =
         (a0 /: associations) { (ai, a) =>
 
-        val inc: \/[NonEmptyList[UMLError.UException], Seq[TreeFeatureBranch[Uml]]] =
+        val inc: NonEmptyList[UMLError.UException] \/ Seq[TreeFeatureBranch[Uml]] =
         if (a.memberEnd.size > 2)
           NonEmptyList(
             illFormedTreeFeatureBranch(None, Some(a), Seq(IllFormedTreeFeatureExplanation.NaryAssociation))
@@ -235,9 +235,9 @@ package object trees {
       aN
     }
 
-    val nonAssociationBranches: \/[NonEmptyList[UMLError.UException], Seq[TreeFeatureBranch[Uml]]] = {
+    val nonAssociationBranches: NonEmptyList[UMLError.UException] \/ Seq[TreeFeatureBranch[Uml]] = {
 
-      val properties0: \/[NonEmptyList[UMLError.UException], Seq[UMLProperty[Uml]]] = Seq().right
+      val properties0: NonEmptyList[UMLError.UException] \/ Seq[UMLProperty[Uml]] = Seq().right
       val propertiesN = (properties0 /: treeContext.allAttributesExceptRedefined) { (propertiesI, p) =>
         propertiesI +++
         treeOps.hasClosedWorldInterpretation(treeContext, p).map { cwi: Boolean =>
@@ -250,8 +250,8 @@ package object trees {
 
       propertiesN
       .flatMap { properties: Seq[UMLProperty[Uml]] =>
-        val p0: \/[NonEmptyList[UMLError.UException], Seq[TreeFeatureBranch[Uml]]] = Seq().right
-        val pN: \/[NonEmptyList[UMLError.UException], Seq[TreeFeatureBranch[Uml]]] =
+        val p0: NonEmptyList[UMLError.UException] \/ Seq[TreeFeatureBranch[Uml]] = Seq().right
+        val pN: NonEmptyList[UMLError.UException] \/ Seq[TreeFeatureBranch[Uml]] =
           (p0 /: properties) { (pi, p) =>
 
             val err_dataTypePort = (treeContext, p) match {
