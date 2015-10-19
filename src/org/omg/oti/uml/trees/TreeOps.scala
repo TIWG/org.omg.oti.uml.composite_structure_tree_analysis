@@ -76,7 +76,7 @@ trait TreeOps[Uml <: UML] {
    * @return
    */
   def isRootBlockSpecificType(treeType: UMLClassifier[Uml])
-  : NonEmptyList[UMLError.UException] \/ Boolean
+  : NonEmptyList[java.lang.Throwable] \/ Boolean
 
   /**
    * Predicate for the open-world (false) vs. closed-world(true) interpretation of the features
@@ -87,13 +87,13 @@ trait TreeOps[Uml <: UML] {
    * @return
    */
   def isPartPropertySpecificType(treeType: UMLClassifier[Uml])
-  : NonEmptyList[UMLError.UException] \/ Boolean
+  : NonEmptyList[java.lang.Throwable] \/ Boolean
 
   def hasClosedWorldInterpretation(treeType: UMLClassifier[Uml], p: UMLProperty[Uml])
-  : NonEmptyList[UMLError.UException] \/ Boolean =
+  : NonEmptyList[java.lang.Throwable] \/ Boolean =
     p
     ._type
-    .fold[\/[NonEmptyList[UMLError.UException], Boolean]](\/-(false)) {
+    .fold[\/[NonEmptyList[java.lang.Throwable], Boolean]](\/-(false)) {
       case featureType: UMLClassifier[Uml] =>
         for {
           treeTypeIsRootBST <- isRootBlockSpecificType(treeType)
