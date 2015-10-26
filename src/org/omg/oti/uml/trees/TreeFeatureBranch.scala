@@ -225,7 +225,7 @@ object IllFormedTreeFeatureExplanation extends Enumeration {
 
 import IllFormedTreeFeatureExplanation._
 
-class IllFormedTreeFeatureBranch[Uml <: UML]
+case class IllFormedTreeFeatureBranch[Uml <: UML]
 ( override val branch: Option[UMLStructuralFeature[Uml]],
   override val association: Option[UMLAssociation[Uml]],
   explanation: Seq[IllFormedTreeFeatureExplanation],

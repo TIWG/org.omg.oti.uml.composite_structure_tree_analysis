@@ -127,7 +127,7 @@ object IllFormedTreeTypeExplanation extends Enumeration {
 
 import IllFormedTreeTypeExplanation._
 
-class IllFormedTreeType[Uml <: UML]
+case class IllFormedTreeType[Uml <: UML]
 ( override val treeFeatureType: UMLType[Uml],
   explanation: Seq[IllFormedTreeTypeExplanation],
   nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]],
