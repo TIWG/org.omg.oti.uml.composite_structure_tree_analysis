@@ -62,25 +62,48 @@ package object trees {
   def treeOpsException[Uml <: UML]
   (treeOps: TreeOps[Uml],
    message: String,
-   cause: Option[java.lang.Throwable] = None)
+   cause: UMLError.OptionThrowableNel = UMLError.emptyThrowableNel)
   : java.lang.Throwable =
     new TreeOpsException(treeOps, message, cause)
+
+  def treeOpsException[Uml <: UML]
+  (treeOps: TreeOps[Uml],
+   message: String,
+   cause: java.lang.Throwable)
+  : java.lang.Throwable =
+    new TreeOpsException(treeOps, message, cause.wrapNel.some)
 
   def illFormedTreeType[Uml <: UML]
   (treeFeatureType: UMLType[Uml],
    explanation: Seq[IllFormedTreeTypeExplanation.Value],
    nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]],
-   cause: Option[java.lang.Throwable] = None)
+   cause: UMLError.OptionThrowableNel = UMLError.emptyThrowableNel)
   : java.lang.Throwable =
     new IllFormedTreeType(treeFeatureType, explanation, nameConflicts, cause)
+
+  def illFormedTreeType[Uml <: UML]
+  (treeFeatureType: UMLType[Uml],
+   explanation: Seq[IllFormedTreeTypeExplanation.Value],
+   nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]],
+   cause: java.lang.Throwable)
+  : java.lang.Throwable =
+    new IllFormedTreeType(treeFeatureType, explanation, nameConflicts, cause.wrapNel.some)
 
   def illFormedTreeFeatureBranch[Uml <: UML]
   (branch: Option[UMLStructuralFeature[Uml]],
    association: Option[UMLAssociation[Uml]],
    explanation: Seq[IllFormedTreeFeatureExplanation.Value],
-   cause: Option[java.lang.Throwable] = None)
+   cause: UMLError.OptionThrowableNel = UMLError.emptyThrowableNel)
   : java.lang.Throwable =
     new IllFormedTreeFeatureBranch(branch, association, explanation, cause)
+
+  def illFormedTreeFeatureBranch[Uml <: UML]
+  (branch: Option[UMLStructuralFeature[Uml]],
+   association: Option[UMLAssociation[Uml]],
+   explanation: Seq[IllFormedTreeFeatureExplanation.Value],
+   cause: java.lang.Throwable)
+  : java.lang.Throwable =
+    new IllFormedTreeFeatureBranch(branch, association, explanation, cause.wrapNel.some)
 
   def analyze[Uml <: UML]
   (t: UMLType[Uml])

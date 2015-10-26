@@ -42,14 +42,14 @@ package org.omg.oti.uml.trees
 import org.omg.oti.uml.UMLError
 import org.omg.oti.uml.read.api._
 
-import scala.{Boolean,Option,None}
+import scala.Boolean
 import scala.Predef.String
 import scalaz._
 
 class TreeOpsException[Uml <: UML]
 (treeOps: TreeOps[Uml],
  override val message: String,
- override val cause: Option[java.lang.Throwable] = None)
+ override val cause: UMLError.OptionThrowableNel = UMLError.emptyThrowableNel)
 extends UMLError.UException(message, cause) {
 
   /**

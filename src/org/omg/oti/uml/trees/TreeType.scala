@@ -131,7 +131,7 @@ class IllFormedTreeType[Uml <: UML]
 ( override val treeFeatureType: UMLType[Uml],
   explanation: Seq[IllFormedTreeTypeExplanation],
   nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]],
-  override val cause: Option[java.lang.Throwable] = None)
+  override val cause: UMLError.OptionThrowableNel = UMLError.emptyThrowableNel)
   extends UMLError.UException("IllFormedTreeType", cause)
   with TreeType[Uml] {
 

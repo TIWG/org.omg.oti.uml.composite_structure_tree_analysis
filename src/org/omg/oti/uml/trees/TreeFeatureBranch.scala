@@ -229,7 +229,7 @@ class IllFormedTreeFeatureBranch[Uml <: UML]
 ( override val branch: Option[UMLStructuralFeature[Uml]],
   override val association: Option[UMLAssociation[Uml]],
   explanation: Seq[IllFormedTreeFeatureExplanation],
-  override val cause: Option[java.lang.Throwable] = None)
+  override val cause: UMLError.OptionThrowableNel = UMLError.emptyThrowableNel)
   extends UMLError.UException("IllFormedTreeFeatureBranch", cause)
   with TreeFeatureBranch[Uml] {
 
