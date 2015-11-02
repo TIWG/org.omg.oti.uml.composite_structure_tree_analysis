@@ -39,6 +39,7 @@
  */
 package org.omg.oti.uml
 
+import org.omg.oti.uml.characteristics._
 import org.omg.oti.uml.read.api._
 import org.omg.oti.uml.xmi.IDGenerator
 
@@ -107,13 +108,19 @@ package object trees {
 
   def analyze[Uml <: UML]
   (t: UMLType[Uml])
-  (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
+  (implicit
+   treeOps: TreeOps[Uml],
+   idg: IDGenerator[Uml],
+   otiCharacteristicsProvider: OTICharacteristicsProvider[Uml])
   : NonEmptyList[java.lang.Throwable] \/ TreeType[Uml] =
     trees.analyze(Seq(), t)
 
   def analyze[Uml <: UML]
   (treePath: Seq[UMLType[Uml]], t: UMLType[Uml])
-  (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
+  (implicit
+   treeOps: TreeOps[Uml],
+   idg: IDGenerator[Uml],
+   otiCharacteristicsProvider: OTICharacteristicsProvider[Uml])
   : NonEmptyList[java.lang.Throwable] \/ TreeType[Uml] =
     t match {
       case ta: UMLAssociationClass[Uml] =>
@@ -135,7 +142,10 @@ package object trees {
 
   def analyzeBranches[Uml <: UML]
   (treePath: Seq[UMLType[Uml]], treeContext: UMLClassifier[Uml])
-  (implicit treeOps: TreeOps[Uml], idg: IDGenerator[Uml])
+  (implicit
+   treeOps: TreeOps[Uml],
+   idg: IDGenerator[Uml],
+   otiCharacteristicsProvider: OTICharacteristicsProvider[Uml])
   : NonEmptyList[java.lang.Throwable] \/ TreeType[Uml] = {
 
     implicit def UMLPropertySeqSemigroup: Semigroup[Seq[UMLProperty[Uml]]] =

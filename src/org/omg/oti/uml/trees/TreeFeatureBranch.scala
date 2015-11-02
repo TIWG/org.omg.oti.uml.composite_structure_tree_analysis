@@ -40,6 +40,7 @@
 package org.omg.oti.uml.trees
 
 import org.omg.oti.uml.UMLError
+import org.omg.oti.uml.characteristics._
 import org.omg.oti.uml.read.api._
 import org.omg.oti.uml.xmi.IDGenerator
 
@@ -281,7 +282,9 @@ object TreeFeatureBranch {
 
   def treeFeatureBranchOrdering[Uml <: UML]
   ()
-  (implicit idg: IDGenerator[Uml])
+  (implicit
+   idg: IDGenerator[Uml],
+   otiCharacteristicsProvider: OTICharacteristicsProvider[Uml])
   : Order[TreeFeatureBranch[Uml]] =
     Order[String].contramap[TreeFeatureBranch[Uml]]( (x: TreeFeatureBranch[Uml]) => {
       (x.branch, x.association) match {
