@@ -39,6 +39,7 @@
  */
 package org.omg.oti.uml.trees
 
+import org.omg.oti.uml.OTIPrimitiveTypes._
 import org.omg.oti.uml.UMLError
 import org.omg.oti.uml.characteristics._
 import org.omg.oti.uml.read.api._
@@ -289,9 +290,9 @@ object TreeFeatureBranch {
     Order[String].contramap[TreeFeatureBranch[Uml]]( (x: TreeFeatureBranch[Uml]) => {
       (x.branch, x.association) match {
         case (Some(sf), _) =>
-          sf.xmiID().toOption.getOrElse(sf.name.getOrElse(""))
+          sf.xmiID().toOption.map(OTI_ID.unwrap).getOrElse(sf.name.getOrElse(""))
         case (None, Some(a)) =>
-          a.xmiID().toOption.getOrElse(a.name.getOrElse(""))
+          a.xmiID().toOption.map(OTI_ID.unwrap).getOrElse(a.name.getOrElse(""))
         case (_, _) =>
           require(false, "branch or association must be defined")
           ""

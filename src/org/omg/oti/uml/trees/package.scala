@@ -39,6 +39,7 @@
  */
 package org.omg.oti.uml
 
+import org.omg.oti.uml.OTIPrimitiveTypes._
 import org.omg.oti.uml.characteristics._
 import org.omg.oti.uml.read.api._
 import org.omg.oti.uml.xmi.IDGenerator
@@ -155,7 +156,7 @@ package object trees {
 
       val associations = treeContext
         .endType_associationExceptRedefinedOrDerived
-        .toList.sortBy(_.xmiID().toOption.getOrElse("")) // @todo propagate errors
+        .toList.sortBy(_.xmiID().toOption.map(OTI_ID.unwrap).getOrElse("")) // @todo propagate errors
 
       val a0: NonEmptyList[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] = Seq().right
       val aN: NonEmptyList[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] =
