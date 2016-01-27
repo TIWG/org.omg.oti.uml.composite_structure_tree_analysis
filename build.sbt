@@ -22,10 +22,10 @@ buildUTCDate in Global := {
   formatter.format(new Date)
 }
 
-lazy val core = Project("oti-trees", file("."))
+lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
   .enablePlugins(IMCEGitPlugin)
   .enablePlugins(IMCEReleasePlugin)
-  .settings(dynamicScriptsResourceSettings(Some("org.omg.oti.trees")))
+  .settings(dynamicScriptsResourceSettings(Some("org.omg.oti.uml.composite_structure_tree_analysis")))
   .settings(IMCEPlugin.strictScalacFatalWarningsSettings)
   .settings(IMCEPlugin.scalaDocSettings(diagrams=false))
   .settings(
@@ -37,7 +37,7 @@ lazy val core = Project("oti-trees", file("."))
     organizationHomepage :=
       Some(url("http://www.omg.org/members/sysml-rtf-wiki/doku.php?id=rtf5:groups:tools_infrastructure:index")),
 
-    buildInfoPackage := "org.omg.oti.trees",
+    buildInfoPackage := "org.omg.oti.composite_structure_tree_analysis",
     buildInfoKeys ++= Seq[BuildInfoKey](BuildInfoKey.action("buildDateUTC") { buildUTCDate.value }),
 
     mappings in (Compile, packageSrc) ++= {
@@ -62,8 +62,8 @@ lazy val core = Project("oti-trees", file("."))
     cleanFiles += (classDirectory in Compile).value,
 
     libraryDependencies ++= Seq (
-      "org.omg.tiwg" %% "oti-core"
-        % Versions.oti_core % "compile" withSources() withJavadoc()
+      "org.omg.tiwg" %% "oti-uml-core"
+        % Versions.oti_uml_core % "compile" withSources() withJavadoc()
     ),
 
     IMCEKeys.nexusJavadocRepositoryRestAPIURL2RepositoryName := Map(
@@ -112,7 +112,7 @@ def dynamicScriptsResourceSettings(dynamicScriptsProjectName: Option[String] = N
       packageSrc in Test,
       packageDoc in Test) map {
       (base, bin, src, doc, binT, srcT, docT) =>
-        val projectName = dynamicScriptsProjectName.getOrElse(base.getName)
+        val projectName = "org.omg.oti.trees"
         val dir = base / "svn" / projectName
         (dir ** "*.dynamicScripts").pair(relativeTo(dir)) ++
           ((dir ** "*.md") --- (dir / "sbt.staging" ***)).pair(relativeTo(dir)) ++

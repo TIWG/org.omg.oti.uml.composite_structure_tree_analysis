@@ -2,9 +2,9 @@
 object Versions {
 
   // this project
-  val version = "445381"
+  val version = "445381.1"
 
-  // https://github.jpl.nasa.gov/imce/org.omg.oti
-  val oti_core="445379"
+  // https://github.jpl.nasa.gov/imce/org.omg.oti.uml.core
+  val oti_uml_core="445379.2"
 
 }
