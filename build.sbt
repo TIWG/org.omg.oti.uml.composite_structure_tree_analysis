@@ -63,7 +63,8 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
 
     libraryDependencies ++= Seq (
       "org.omg.tiwg" %% "oti-uml-core"
-        % Versions.oti_uml_core % "compile" withSources() withJavadoc()
+        % Versions.oti_uml_core % "compile" withSources() withJavadoc() artifacts
+        Artifact("oti-uml-core", "resource", "zip", Some("resource"), Seq(), None, Map())
     ),
 
     IMCEKeys.nexusJavadocRepositoryRestAPIURL2RepositoryName := Map(
