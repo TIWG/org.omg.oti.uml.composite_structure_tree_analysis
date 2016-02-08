@@ -57,7 +57,6 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
     organizationHomepage := Some(url("http://solitaire.omg.org/browse/TIWG")),
 
     scalaSource in Compile := baseDirectory.value / "svn" / "org.omg.oti.trees" / "src",
-
     classDirectory in Compile := baseDirectory.value / "svn" / "org.omg.oti.trees" / "bin",
     cleanFiles += (classDirectory in Compile).value,
 
