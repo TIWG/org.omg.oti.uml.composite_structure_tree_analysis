@@ -42,7 +42,7 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
       val previous = projectID.value
       previous.extra(
         "build.date.utc" -> buildUTCDate.value,
-        "zip.contents" -> "oti.generic")
+        "artifact.kind" -> "generic.library")
     },
 
     git.baseVersion := Versions.version,
