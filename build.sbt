@@ -3,6 +3,7 @@ import sbt.Keys._
 import sbt._
 
 import gov.nasa.jpl.imce.sbt._
+import gov.nasa.jpl.imce.sbt.ProjectHelper._
 
 useGpg := true
 
@@ -16,6 +17,7 @@ developers := List(
 lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
   .enablePlugins(IMCEGitPlugin)
   .enablePlugins(IMCEReleasePlugin)
+  .settings(IMCEReleasePlugin.packageReleaseProcessSettings)
   .settings(dynamicScriptsResourceSettings(Some("org.omg.oti.uml.composite_structure_tree_analysis")))
   .settings(IMCEPlugin.strictScalacFatalWarningsSettings)
   .settings(IMCEPlugin.scalaDocSettings(diagrams=false))
@@ -49,17 +51,10 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
     organizationName := "JPL, Caltech & Object Management Group",
     organizationHomepage := Some(url("http://solitaire.omg.org/browse/TIWG")),
 
-    scalaSource in Compile := baseDirectory.value / "svn" / "org.omg.oti.trees" / "src",
-    classDirectory in Compile := baseDirectory.value / "svn" / "org.omg.oti.trees" / "bin",
-    cleanFiles += (classDirectory in Compile).value,
+    scalaSource in Compile :=
+      baseDirectory.value / "svn" / "org.omg.oti.trees" / "src",
 
     extractArchives := {},
-
-    libraryDependencies ++= Seq (
-      "org.omg.tiwg" %% "oti-uml-core"
-        % Versions_oti_uml_core.version % "compile" withSources() withJavadoc() artifacts
-        Artifact("oti-uml-core", "zip", "zip", Some("resource"), Seq(), None, Map())
-    ),
 
     IMCEKeys.nexusJavadocRepositoryRestAPIURL2RepositoryName := Map(
        "https://oss.sonatype.org/service/local" -> "releases",
@@ -69,8 +64,15 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
     IMCEKeys.pomRepositoryPathRegex := """\<repositoryPath\>\s*([^\"]*)\s*\<\/repositoryPath\>""".r
 
   )
-  .settings(IMCEReleasePlugin.packageReleaseProcessSettings)
-
+  .dependsOnSourceProjectOrLibraryArtifacts(
+    "oti-uml-core",
+    "org.omg.oti.uml.core",
+    Seq(
+      "org.omg.tiwg" %% "oti-uml-core"
+        % Versions_oti_uml_core.version % "compile" withSources() withJavadoc() artifacts
+        Artifact("oti-uml-core", "zip", "zip", Some("resource"), Seq(), None, Map())
+    )
+  )
 
 def dynamicScriptsResourceSettings(dynamicScriptsProjectName: Option[String] = None): Seq[Setting[_]] = {
 
