@@ -43,6 +43,7 @@ import org.omg.oti.uml.read.api._
 
 import scala.Boolean
 import scala.Predef.String
+import scala.collection.immutable.Set
 import scalaz._
 
 class TreeOpsException[Uml <: UML]
@@ -75,7 +76,7 @@ trait TreeOps[Uml <: UML] {
    * @return
    */
   def isRootBlockSpecificType(treeType: UMLClassifier[Uml])
-  : NonEmptyList[java.lang.Throwable] \/ Boolean
+  : Set[java.lang.Throwable] \/ Boolean
 
   /**
    * Predicate for the open-world (false) vs. closed-world(true) interpretation of the features
@@ -86,13 +87,13 @@ trait TreeOps[Uml <: UML] {
    * @return
    */
   def isPartPropertySpecificType(treeType: UMLClassifier[Uml])
-  : NonEmptyList[java.lang.Throwable] \/ Boolean
+  : Set[java.lang.Throwable] \/ Boolean
 
   def hasClosedWorldInterpretation(treeType: UMLClassifier[Uml], p: UMLProperty[Uml])
-  : NonEmptyList[java.lang.Throwable] \/ Boolean =
+  : Set[java.lang.Throwable] \/ Boolean =
     p
     ._type
-    .fold[\/[NonEmptyList[java.lang.Throwable], Boolean]](\/-(false)) {
+    .fold[\/[Set[java.lang.Throwable], Boolean]](\/-(false)) {
       case featureType: UMLClassifier[Uml] =>
         for {
           treeTypeIsRootBST <- isRootBlockSpecificType(treeType)

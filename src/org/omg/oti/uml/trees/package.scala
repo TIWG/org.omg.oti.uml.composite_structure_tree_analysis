@@ -72,7 +72,7 @@ package object trees {
    message: String,
    cause: java.lang.Throwable)
   : java.lang.Throwable =
-    new TreeOpsException(treeOps, message, cause.wrapNel.some)
+    new TreeOpsException(treeOps, message, Set(cause).some)
 
   def illFormedTreeType[Uml <: UML]
   (treeFeatureType: UMLType[Uml],
@@ -88,7 +88,7 @@ package object trees {
    nameConflicts: Map[String, Seq[TreeTypedFeatureBranch[Uml]]],
    cause: java.lang.Throwable)
   : java.lang.Throwable =
-    new IllFormedTreeType(treeFeatureType, explanation, nameConflicts, cause.wrapNel.some)
+    new IllFormedTreeType(treeFeatureType, explanation, nameConflicts, Set(cause).some)
 
   def illFormedTreeFeatureBranch[Uml <: UML]
   (branch: Option[UMLStructuralFeature[Uml]],
@@ -104,7 +104,7 @@ package object trees {
    explanation: Seq[IllFormedTreeFeatureExplanation.Value],
    cause: java.lang.Throwable)
   : java.lang.Throwable =
-    new IllFormedTreeFeatureBranch(branch, association, explanation, cause.wrapNel.some)
+    new IllFormedTreeFeatureBranch(branch, association, explanation, Set(cause).some)
 
   def analyze[Uml <: UML]
   (t: UMLType[Uml])
@@ -112,7 +112,7 @@ package object trees {
    treeOps: TreeOps[Uml],
    idg: IDGenerator[Uml],
    otiCharacteristicsProvider: OTICharacteristicsProvider[Uml])
-  : NonEmptyList[java.lang.Throwable] \/ TreeType[Uml] =
+  : Set[java.lang.Throwable] \/ TreeType[Uml] =
     trees.analyze(Seq(), t)
 
   def analyze[Uml <: UML]
@@ -121,7 +121,7 @@ package object trees {
    treeOps: TreeOps[Uml],
    idg: IDGenerator[Uml],
    otiCharacteristicsProvider: OTICharacteristicsProvider[Uml])
-  : NonEmptyList[java.lang.Throwable] \/ TreeType[Uml] =
+  : Set[java.lang.Throwable] \/ TreeType[Uml] =
     t match {
       case ta: UMLAssociationClass[Uml] =>
         analyzeBranches(treePath, ta)
@@ -130,7 +130,7 @@ package object trees {
       case td: UMLDataType[Uml] =>
         analyzeBranches(treePath, td)
       case _t =>
-        NonEmptyList(
+        Set(
           illFormedTreeType(_t, Seq(IllFormedTreeTypeExplanation.NotCompositeStructureOrDataType), Map())
         ).left
     }
@@ -146,31 +146,31 @@ package object trees {
    treeOps: TreeOps[Uml],
    idg: IDGenerator[Uml],
    otiCharacteristicsProvider: OTICharacteristicsProvider[Uml])
-  : NonEmptyList[java.lang.Throwable] \/ TreeType[Uml] = {
+  : Set[java.lang.Throwable] \/ TreeType[Uml] = {
 
     implicit def UMLPropertySeqSemigroup: Semigroup[Seq[UMLProperty[Uml]]] =
       Semigroup.instance(_ ++ _)
 
-    val associationBranches: NonEmptyList[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] = {
+    val associationBranches: Set[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] = {
 
       val associations = treeContext
         .endType_associationExceptRedefinedOrDerived
         .toList.sortBy(_.xmiID().toOption.map(OTI_ID.unwrap).getOrElse("")) // @todo propagate errors
 
-      val a0: NonEmptyList[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] = Seq().right
-      val aN: NonEmptyList[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] =
+      val a0: Set[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] = Seq().right
+      val aN: Set[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] =
         (a0 /: associations) { (ai, a) =>
 
-        val inc: NonEmptyList[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] =
+        val inc: Set[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] =
         if (a.memberEnd.size > 2)
-          NonEmptyList(
+          Set(
             illFormedTreeFeatureBranch(None, Some(a), Seq(IllFormedTreeFeatureExplanation.NaryAssociation))
           ).left
         else
           a
           .getDirectedAssociationEnd
-          .fold[\/[NonEmptyList[java.lang.Throwable], Seq[TreeFeatureBranch[Uml]]]]{
-            NonEmptyList(
+          .fold[\/[Set[java.lang.Throwable], Seq[TreeFeatureBranch[Uml]]]]{
+            Set(
               illFormedTreeFeatureBranch(None, Some(a), Seq(IllFormedTreeFeatureExplanation.UndirectedBinaryAssociation))
             ).left
           }{
@@ -237,7 +237,7 @@ package object trees {
                       }
                   }
                 case problems =>
-                    NonEmptyList(
+                    Set(
                       illFormedTreeFeatureBranch(Some(aTo), Some(a), problems.toSeq)
                     ).left
               }
@@ -249,13 +249,13 @@ package object trees {
             case (aFrom, aTo) =>
               aFrom
                 ._type
-                .fold[\/[NonEmptyList[java.lang.Throwable], Seq[TreeFeatureBranch[Uml]]]](
-                  NonEmptyList(
+                .fold[\/[Set[java.lang.Throwable], Seq[TreeFeatureBranch[Uml]]]](
+                  Set(
                     illFormedTreeFeatureBranch(None, Some(a),
                       Seq(IllFormedTreeFeatureExplanation.UntypedAssociationFromMemberEnd))
                   ).left
               ){ tFrom =>
-                NonEmptyList(
+                Set(
                   illFormedTreeFeatureBranch(None, Some(a),
                     Seq(IllFormedTreeFeatureExplanation.UnrelatedAssociationFromMemberEndType))
                 ).left
@@ -268,9 +268,9 @@ package object trees {
       aN
     }
 
-    val nonAssociationBranches: NonEmptyList[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] = {
+    val nonAssociationBranches: Set[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] = {
 
-      val properties0: NonEmptyList[java.lang.Throwable] \/ Seq[UMLProperty[Uml]] = Seq().right
+      val properties0: Set[java.lang.Throwable] \/ Seq[UMLProperty[Uml]] = Seq().right
       val propertiesN = (properties0 /: treeContext.allAttributesExceptRedefined) { (propertiesI, p) =>
         propertiesI +++
         treeOps.hasClosedWorldInterpretation(treeContext, p).map { cwi: Boolean =>
@@ -283,8 +283,8 @@ package object trees {
 
       propertiesN
       .flatMap { properties: Seq[UMLProperty[Uml]] =>
-        val p0: NonEmptyList[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] = Seq().right
-        val pN: NonEmptyList[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] =
+        val p0: Set[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] = Seq().right
+        val pN: Set[java.lang.Throwable] \/ Seq[TreeFeatureBranch[Uml]] =
           (p0 /: properties) { (pi, p) =>
 
             val err_dataTypePort = (treeContext, p) match {
@@ -349,7 +349,7 @@ package object trees {
                         }
                   }
                 case problems =>
-                  NonEmptyList(
+                  Set(
                     illFormedTreeFeatureBranch(Some(p), None, problems.toSeq)
                   ).left
               }
@@ -362,7 +362,7 @@ package object trees {
     }
 
     (associationBranches +++ nonAssociationBranches)
-    .flatMap[NonEmptyList[java.lang.Throwable], TreeType[Uml]]{
+    .flatMap[Set[java.lang.Throwable], TreeType[Uml]]{
       (allBranches: Seq[TreeFeatureBranch[Uml]]) => 
 
         val allTypedBranches: Seq[TreeTypedFeatureBranch[Uml]] =
@@ -378,7 +378,7 @@ package object trees {
         if (nameConflicts.isEmpty)
           \/-(TreeType.makeTreeType(treeContext)(allBranches))
         else
-          NonEmptyList(
+          Set(
             illFormedTreeType(treeContext, Seq(IllFormedTreeTypeExplanation.FeatureNameConflicts), nameConflicts)
           ).left
     }
