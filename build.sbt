@@ -52,7 +52,7 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
     organizationHomepage := Some(url("http://solitaire.omg.org/browse/TIWG")),
 
     scalaSource in Compile :=
-      baseDirectory.value / "svn" / "org.omg.oti.trees" / "src",
+      baseDirectory.value / "svn" / "src",
 
     extractArchives := {},
 
@@ -110,7 +110,7 @@ def dynamicScriptsResourceSettings(dynamicScriptsProjectName: Option[String] = N
       packageDoc in Test) map {
       (base, bin, src, doc, binT, srcT, docT) =>
         val projectName = "org.omg.oti.trees"
-        val dir = base / "svn" / projectName
+        val dir = base / "svn"
           ((dir ** "*.md") --- (dir / "sbt.staging" ***)).pair(relativeTo(dir)) ++
           addIfExists(bin, "lib/" + bin.name) ++
           addIfExists(binT, "lib/" + binT.name) ++
