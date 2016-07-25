@@ -44,10 +44,9 @@ import org.omg.oti.uml.characteristics._
 import org.omg.oti.uml.read.api._
 import org.omg.oti.uml.xmi.IDGenerator
 
-import scala.{Enumeration,Int,Option,None,Some,StringContext,Tuple2,unchecked}
+import scala.{Enumeration,Option,None,Some,Tuple2}
 import scala.Predef.{require,String}
 import scala.collection.immutable._
-import scala.language.postfixOps
 import scalaz._, Scalaz._
 /**
  * For a UML composite structure (class, but not a kind of association class) or UML DataType,

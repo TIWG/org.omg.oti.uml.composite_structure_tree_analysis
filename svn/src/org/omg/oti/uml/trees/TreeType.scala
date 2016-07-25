@@ -40,10 +40,9 @@ package org.omg.oti.uml.trees
 
 import org.omg.oti.uml.UMLError
 import org.omg.oti.uml.read.api._
-import scala.language.postfixOps
 
-import scala.{Enumeration,Option,None,Some,StringContext,Tuple2}
-import scala.Predef.{require,String}
+import scala.{Enumeration,Option,None,Tuple2}
+import scala.Predef.String
 import scala.collection.immutable._
 
 /**

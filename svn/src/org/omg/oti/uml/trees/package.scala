@@ -43,10 +43,9 @@ import org.omg.oti.uml.characteristics._
 import org.omg.oti.uml.read.api._
 import org.omg.oti.uml.xmi.IDGenerator
 
-import scala.{Boolean,Option,None,Some,StringContext}
+import scala.{Boolean,Option,None,Some}
 import scala.Predef.{Set => _, Map => _, _}
 import scala.collection.immutable._
-import scala.language.postfixOps
 import scalaz._, Scalaz._
 
 /**
