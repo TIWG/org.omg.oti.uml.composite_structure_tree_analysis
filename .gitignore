@@ -3,4 +3,5 @@
 .idea
 .iml
 *links.json
+local.*
 target

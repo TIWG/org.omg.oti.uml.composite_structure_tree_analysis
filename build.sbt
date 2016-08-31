@@ -5,16 +5,7 @@ import sbt._
 import gov.nasa.jpl.imce.sbt._
 import gov.nasa.jpl.imce.sbt.ProjectHelper._
 
-useGpg := true
-
 updateOptions := updateOptions.value.withCachedResolution(true)
-
-developers := List(
-  Developer(
-    id="rouquett",
-    name="Nicolas F. Rouquette",
-    email="nicolas.f.rouquette@jpl.nasa.gov",
-    url=url("https://gateway.jpl.nasa.gov/personal/rouquett/default.aspx")))
 
 lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
   .enablePlugins(IMCEGitPlugin)
@@ -58,21 +49,17 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
 
     extractArchives := {},
 
-    IMCEKeys.nexusJavadocRepositoryRestAPIURL2RepositoryName := Map(
-       "https://oss.sonatype.org/service/local" -> "releases",
-       "https://cae-nexuspro.jpl.nasa.gov/nexus/service/local" -> "JPL",
-       "https://cae-nexuspro.jpl.nasa.gov/nexus/content/groups/jpl.beta.group" -> "JPL Beta Group",
-       "https://cae-nexuspro.jpl.nasa.gov/nexus/content/groups/jpl.public.group" -> "JPL Public Group"),
-    IMCEKeys.pomRepositoryPathRegex := """\<repositoryPath\>\s*([^\"]*)\s*\<\/repositoryPath\>""".r
+    resolvers += Resolver.bintrayRepo("jpl-imce", "gov.nasa.jpl.imce"),
+    resolvers += Resolver.bintrayRepo("tiwg", "org.omg.tiwg")
 
   )
   .dependsOnSourceProjectOrLibraryArtifacts(
     "oti-uml-core",
     "org.omg.oti.uml.core",
     Seq(
-      "org.omg.tiwg" %% "oti-uml-core"
+      "org.omg.tiwg" %% "org.omg.oti.uml.core"
         % Versions_oti_uml_core.version % "compile" withSources() withJavadoc() artifacts
-        Artifact("oti-uml-core", "zip", "zip", Some("resource"), Seq(), None, Map())
+        Artifact("org.omg.oti.uml.core", "zip", "zip", Some("resource"), Seq(), None, Map())
     )
   )
 
