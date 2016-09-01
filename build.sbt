@@ -44,9 +44,6 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
     organizationName := "JPL, Caltech & Object Management Group",
     organizationHomepage := Some(url("http://solitaire.omg.org/browse/TIWG")),
 
-    scalaSource in Compile :=
-      baseDirectory.value / "svn" / "src",
-
     extractArchives := {},
 
     resolvers += Resolver.bintrayRepo("jpl-imce", "gov.nasa.jpl.imce"),
