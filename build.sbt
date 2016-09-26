@@ -15,7 +15,7 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
   .settings(IMCEPlugin.strictScalacFatalWarningsSettings)
   //.settings(IMCEPlugin.scalaDocSettings(diagrams=false))
   .settings(
-    IMCEKeys.licenseYearOrRange := "2014-2016",
+    IMCEKeys.licenseYearOrRange := "2015",
     IMCEKeys.organizationInfo := IMCEPlugin.Organizations.oti,
     IMCEKeys.targetJDK := IMCEKeys.jdk18.value,
 
