@@ -13,15 +13,10 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
   .settings(IMCEReleasePlugin.packageReleaseProcessSettings)
   .settings(dynamicScriptsResourceSettings(Some("org.omg.oti.uml.composite_structure_tree_analysis")))
   .settings(IMCEPlugin.strictScalacFatalWarningsSettings)
-  //.settings(IMCEPlugin.scalaDocSettings(diagrams=false))
   .settings(
     IMCEKeys.licenseYearOrRange := "2015",
     IMCEKeys.organizationInfo := IMCEPlugin.Organizations.oti,
     IMCEKeys.targetJDK := IMCEKeys.jdk18.value,
-
-    organization := "org.omg.tiwg",
-    organizationHomepage :=
-      Some(url("http://www.omg.org/members/sysml-rtf-wiki/doku.php?id=rtf5:groups:tools_infrastructure:index")),
 
     buildInfoPackage := "org.omg.oti.composite_structure_tree_analysis",
     buildInfoKeys ++= Seq[BuildInfoKey](BuildInfoKey.action("buildDateUTC") { buildUTCDate.value }),
@@ -41,8 +36,6 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
     },
 
     git.baseVersion := Versions.version,
-    organizationName := "JPL, Caltech & Object Management Group",
-    organizationHomepage := Some(url("http://solitaire.omg.org/browse/TIWG")),
 
     extractArchives := {},
 
