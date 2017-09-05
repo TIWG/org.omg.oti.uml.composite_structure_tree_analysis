@@ -9,12 +9,10 @@ updateOptions := updateOptions.value.withCachedResolution(true)
 
 lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
   .enablePlugins(IMCEGitPlugin)
-  .enablePlugins(IMCEReleasePlugin)
-  .settings(IMCEReleasePlugin.packageReleaseProcessSettings)
   .settings(dynamicScriptsResourceSettings("org.omg.oti.uml.composite_structure_tree_analysis"))
   .settings(IMCEPlugin.strictScalacFatalWarningsSettings)
   .settings(
-    IMCEKeys.licenseYearOrRange := "2015",
+    IMCEKeys.licenseYearOrRange := "2014",
     IMCEKeys.organizationInfo := IMCEPlugin.Organizations.oti,
     IMCEKeys.targetJDK := IMCEKeys.jdk18.value,
 
@@ -36,8 +34,6 @@ lazy val core = Project("oti-uml-composite_structure_tree_analysis", file("."))
     },
 
     git.baseVersion := Versions.version,
-
-    extractArchives := {},
 
     resolvers += Resolver.bintrayRepo("jpl-imce", "gov.nasa.jpl.imce"),
     resolvers += Resolver.bintrayRepo("tiwg", "org.omg.tiwg"),
