@@ -30,6 +30,4 @@ pgpPublicRing := file("local.pubring.gpg")
 
 git.baseVersion := Versions.version
 
-git.useGitDescribe := true
-
 versionWithGit
